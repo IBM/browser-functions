@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>New</title>
+    <script type="text/javascript" src="./assets/carbon-components@10.3.2/carbon-components.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="./assets/carbon-components@10.3.2/carbon-components.min.css"/>
+
+    <style>
+        body, html {
+            height: 100%;
+        }
+
+        .new-application-form {
+            background-color: white;
+            width: 600px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .header {
+            margin-bottom: 1rem;
+        }
+
+        .bx--text-input-wrapper {
+            margin-bottom: 2rem;
+        }
+
+        .button-bar {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .button-bar > * {
+            margin-right: 1rem;
+        }
+
+        .bx--text-input__field-wrapper {
+            width: 100%;
+        }
+
+        bx-notification {
+            display: none;
+        }
+
+        .modal-message {
+            margin-bottom: 2rem;
+        }
+
+        #application-id {
+            margin-bottom: 2rem;
+        }
+
+        .bx--modal-content {
+            width: 97%;
+        }
+
+        .modal-message {
+            width: 100%;
+        }
+
+    </style>
+
+    <!--INJECT_SERVER_VARS-->
+
+    <script src="utils/browser-check.js"></script>
+    <script type="module">
+        import "./components/page-header.js"
+        import "./components/page-container.js"
+        import "./components/bx-button.js"
+        import "./components/bx-notification.js"
+        import './components/page-footer.js'
+
+        window.onload = () => {
+
+            const createButton = document.querySelector('#create-button')
+            createButton.addEventListener('click', () => {
+                document.querySelector('#create-form').submit()
+            })
+
+            const goToAppButton = document.querySelector('#go-to-app-button')
+            goToAppButton.addEventListener('click', () => {
+                document.querySelector('#login-form').submit()
+            })
+
+            if (window.serverVars && window.serverVars.error) {
+                document.querySelector('bx-notification').style.display = "block"
+            }
+
+            if (window.serverVars && window.serverVars.fields) {
+                document.querySelector('#id-input').value = window.fields.applicationId
+                document.querySelector('#email-input').value = window.fields.email
+
+            }
+
+            const modal = CarbonComponents.Modal.create(document.getElementById('modal'));
+
+            if (window.serverVars && window.serverVars.accessKey) {
+                modal.show()
+            }
+
+            document.addEventListener('modal-beinghidden', function (evt) {
+                evt.preventDefault();
+            })
+        }
+
+    </script>
+</head>
+<body>
+
+<page-header></page-header>
+
+<page-container>
+    <bx-notification type="error" title="Error" subtitle="{{error}}"></bx-notification>
+
+    <form id="create-form" class="new-application-form" action="/new" method="post">
+        <div class="header">
+            <h1>Create a new application</h1>
+            <div class="bx--label">Each application can have multiple functions and files associated with it.</div>
+        </div>
+
+        <div class="bx--form-item bx--text-input-wrapper">
+            <label for="id-input" class="bx--label">Application ID</label>
+            <div id="helper-text" class="bx--form__helper-text">
+                A unique namespace that your functions will be created under
+            </div>
+            <div class="bx--text-input__field-wrapper">
+                <input id="id-input" type="text" class="bx--text-input" name="applicationId"
+                       placeholder="my-awesome-app">
+            </div>
+        </div>
+
+        <div class="bx--form-item bx--text-input-wrapper">
+            <label for="email-input" class="bx--label">Email address</label>
+            <div class="bx--text-input__field-wrapper">
+                <input id="email-input" type="text" class="bx--text-input" name="email" placeholder="example@ibm.com">
+            </div>
+        </div>
+
+        <div class="button-bar">
+            <div class="bx--form-item">
+                <bx-button id="create-button" icon="plus" type="secondary">Create</bx-button>
+            </div>
+        </div>
+
+    </form>
+</page-container>
+
+<div data-modal id="modal" class="bx--modal " role="dialog" aria-modal="true" aria-labelledby="modal-kcip6qk6dd-label"
+     aria-describedby="modal-kcip6qk6dd-heading" tabindex="-1">
+    <div class="bx--modal-container">
+        <div class="bx--modal-header">
+            <p class="bx--modal-header__heading bx--type-beta" id="modal-kcip6qk6dd-heading">Application created</p>
+        </div>
+
+            <div class="bx--modal-content">
+                <form id="login-form" action="/login" method="post">
+
+                <p class="modal-message">
+                    Congratulations your application has been created. Keep the access key below safe as you will need
+                    it to create and
+                    administer your functions.
+                </p>
+
+                <div id="application-id" class="bx--form-item">
+                    <label for="app-id-input" class="bx--label">Application ID</label>
+                    <input id="app-id-input" name="applicationId" class="bx--text-input" readonly value="{{applicationId}}">
+
+                </div>
+
+                <div class="bx--form-item">
+                    <label for="access-key-input" class="bx--label">Access Key</label>
+                    <input id="access-key-input" name="accessKey" class="bx--text-input" readonly value="{{accessKey}}">
+                </div>
+                </form>
+
+            </div>
+
+            <div class="bx--modal-footer">
+                <button id="go-to-app-button" type="submit" class="bx--btn bx--btn--secondary" type="button"
+                        style="justify-content: center">Go to Application
+                </button>
+            </div>
+
+    </div>
+</div>
+
+<page-footer></page-footer>
+
+</body>
+</html>

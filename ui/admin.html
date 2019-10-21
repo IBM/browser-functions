@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin</title>
+    <script type="text/javascript" src="./assets/carbon-components@10.3.2/carbon-components.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="./assets/carbon-components@10.3.2/carbon-components.min.css"/>
+
+    <style>
+        body, html {
+            height: 100%;
+        }
+
+        table {
+            max-width: 1000px;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            margin-top: 2rem;
+        }
+
+        .buttons {
+            width: 100%;
+            max-width: 1000px;
+            margin-top: 2rem;
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-end;
+        }
+
+        .buttons > * {
+            margin-left: 1rem;
+        }
+    </style>
+
+    <script src="utils/browser-check.js"></script>
+    <script type="module">
+        import './components/page-container.js'
+        import './components/page-header.js'
+        import './components/bx-button.js'
+        import './components/icon-button.js'
+        import './components/page-footer.js'
+        import {$} from './utils/utils.js'
+
+
+        function createTableRow(...args) {
+            const row = document.createElement('tr');
+
+            for (let arg of args) {
+                const rowItem = document.createElement('td')
+                if (typeof arg === "object") {
+                    rowItem.appendChild(arg)
+                } else {
+                    rowItem.innerHTML = arg
+                }
+                row.appendChild(rowItem)
+
+            }
+           return row
+        }
+
+        window.addEventListener('load', function () {
+            fetchAndDisplayData()
+
+            setInterval(fetchAndDisplayData, 5000)
+
+            $("#new-chrome").addEventListener('click', () => {
+                fetch("/admin/browser/chrome" + window.location.search, {method: 'POST'}).then(() => console.log('done'))
+            })
+
+            $("#new-firefox").addEventListener('click', () => {
+                fetch("/admin/browser/firefox" + window.location.search, {method: 'POST'}).then(() => console.log('done'))
+            })
+        })
+
+        async function fetchAndDisplayData() {
+            const stats = await (await fetch('/admin/stats' + window.location.search)).json()
+            const browserTableBody = $("#browsers")
+            const controllerTableBody = $("#controllers")
+
+
+            browserTableBody.clear()
+            for (let browser of stats.browsers) {
+                const deleteIconButton = document.createElement('icon-button')
+                deleteIconButton.setAttribute('icon', 'deleteIcon')
+                deleteIconButton.addEventListener('click', () => deleteBrowserById(browser.id))
+                const rowNode = createTableRow(browser.id, browser.version, browser.createdAt, deleteIconButton)
+                browserTableBody.appendChild(rowNode)
+            }
+
+            controllerTableBody.clear()
+            for (let controller of stats.controllers) {
+                const rowNode = createTableRow(controller.id, controller.browser, controller.version, controller.address, controller.connectedAt)
+                controllerTableBody.appendChild(rowNode)
+            }
+        }
+
+        function deleteBrowserById(id) {
+            fetch('/admin/browser/' + id + window.location.search, {method: 'DELETE'})
+        }
+
+        function deleteControllerById(id) {
+            fetch('/admin/controller/' + id + window.location.search, {method: 'DELETE'})
+        }
+    </script>
+
+</head>
+<body>
+
+<page-header></page-header>
+
+<page-container>
+    <div class="buttons">
+        <bx-button id="new-chrome" type="secondary" icon="plus">New Chrome</bx-button>
+        <bx-button id="new-firefox" type="secondary" icon="plus">New Firefox</bx-button>
+    </div>
+    <h1>Managed Local Browser Instances</h1>
+    <table class="bx--data-table">
+        <thead>
+        <tr>
+            <th>
+                <span class="bx--table-header-label">ID</span>
+            </th>
+            <th>
+                <span class="bx--table-header-label">Version</span>
+            </th>
+            <th>
+                <span class="bx--table-header-label">Created at</span>
+            </th>
+
+            <th></th><!--delete-->
+
+        </tr>
+        </thead>
+        <tbody id="browsers">
+
+        </tbody>
+    </table>
+
+    <h1>Connected Controllers</h1>
+    <table class="bx--data-table">
+        <thead>
+        <tr>
+            <th>
+                <span class="bx--table-header-label">ID</span>
+            </th>
+            <th>
+                <span class="bx--table-header-label">Browser</span>
+            </th>
+            <th>
+                <span class="bx--table-header-label">Version</span>
+            </th>
+            <th>
+                <span class="bx--table-header-label">Address</span>
+            </th>
+            <th>
+                <span class="bx--table-header-label">Connected at</span>
+            </th>
+
+        </tr>
+        </thead>
+        <tbody id="controllers">
+
+        </tbody>
+    </table>
+
+</page-container>
+
+<page-footer></page-footer>
+
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Functions</title>
+    <script type="text/javascript" src="./assets/carbon-components@10.3.2/carbon-components.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="./assets/carbon-components@10.3.2/carbon-components.min.css"/>
+    <style>
+        body, html {
+            height: 100%;
+        }
+
+        .login-input {
+            margin-bottom: 2rem;
+        }
+
+        .login-form {
+            background-color: white;
+            width: 600px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .button-bar {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .button-bar > * {
+            margin-right: 1rem;
+        }
+
+        bx-notification {
+            display: none;
+        }
+
+    </style>
+
+    <!--INJECT_SERVER_VARS-->
+
+    <script src="utils/browser-check.js"></script>
+    <script type="module">
+        import './components/page-header.js'
+        import './components/page-container.js'
+        import './components/bx-button.js'
+        import './components/bx-notification.js'
+        import './components/page-footer.js'
+
+        window.onload = () => {
+            const continueButton = document.querySelector('#continue-button')
+            continueButton.addEventListener('click', () => {
+                document.querySelector('form').submit()
+            })
+
+            const createButton = document.querySelector('#create-button')
+            createButton.addEventListener('click', () => {
+                window.location.href='/new'
+            })
+
+            const examplesButton = document.querySelector('#examples-button')
+            examplesButton.addEventListener('click', () => {
+                document.getElementById('api-key-input').value = 'examples';
+                document.querySelector('form').submit()
+            })
+
+            if (window.serverVars && window.serverVars.error) {
+                document.querySelector('bx-notification').style.display = "block"
+            }
+        }
+    </script>
+</head>
+<body>
+
+<page-header></page-header>
+
+
+<page-container>
+    <bx-notification type="error" title="Error" subtitle="{{error}}"> </bx-notification>
+
+    <form class="login-form" action="/login" method="post">
+        <div class="bx--form-item">
+            <label for="api-key-input" class="bx--label">Please enter the API access key for your application</label>
+            <input id="api-key-input" type="text" name="accessKey" class="bx--text-input login-input" placeholder="API key">
+        </div>
+        <div class="button-bar">
+            <button id="examples-button" class="bx--btn bx--btn--secondary" type="button">
+                Examples
+            </button>
+            <button id="create-button" class="bx--btn bx--btn--secondary" type="button">
+                Create New
+            </button>
+            <div class="bx--form-item">
+                <bx-button id="continue-button" icon="rightArrow">Continue</bx-button>
+            </div>
+        </div>
+
+    </form>
+
+</page-container>
+
+<page-footer></page-footer>
+
+</body>
+</html>

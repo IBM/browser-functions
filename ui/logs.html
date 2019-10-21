@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Logs</title>
+    <script type="text/javascript" src="./assets/carbon-components@10.3.2/carbon-components.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="./assets/carbon-components@10.3.2/carbon-components.min.css"/>
+    <style>
+        body, html {
+            height: 100%;
+        }
+
+        .log-container {
+            width: 100%;
+            height: 100%;
+            padding: 2em;
+        }
+
+        #logs {
+
+        }
+
+        .text-area {
+            height: 90%;
+            width: 100%;
+        }
+
+        page-container {
+            height: calc(100% - 46px);
+        }
+    </style>
+
+    <script src="utils/browser-check.js"></script>
+    <script type="module">
+        import './components/page-header.js'
+        import './components/page-container.js'
+        import './components/page-footer.js'
+        import {$} from './utils/utils.js'
+
+        window.onload = () => {
+            const eventSource = new EventSource("/log-data" + window.location.search)
+            const textArea = $('#logs')
+
+            eventSource.onmessage = function (e) {
+                const autoScroll = (textArea.scrollTop + textArea.clientHeight) === textArea.scrollHeight
+                textArea.value += e.data + '\n'
+                if (autoScroll) {
+                    textArea.scrollTop = textArea.scrollHeight;
+                }
+            }
+        }
+
+
+    </script>
+</head>
+<body>
+
+<page-header>IBM Research | Browser Functions</page-header>
+
+
+<page-container>
+    <div class="log-container">
+        <div class="bx--text-area__wrapper text-area">
+            <textarea readonly id="logs" class="bx--text-area bx--text-area--v2" rows="4" cols="50" placeholder="No logs yet"></textarea>
+        </div>
+    </div>
+
+
+</page-container>
+
+<page-footer></page-footer>
+
+</body>
+</html>

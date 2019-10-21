@@ -1,0 +1,66 @@
+<script src="https://cdn.rawgit.com/gpujs/gpu.js/45103b7f154a12ec639990c6896b21a053eb6a6c/bin/gpu.js"></script>
+
+<script>
+  //
+  // Demo of using gpu.js to GPU-accelerate matrix multiplication. Requires that the 
+  // server has a GPU and drivers installed so that the browser has hardware WebGL support.
+  //
+
+  function fillArrayRandom(array) {
+    for (var i = 0; i < array.length; i++) {
+      array[i] = Math.random();
+    }
+    return array;
+  }
+
+  function splitArray(array, part) {
+    var result = [];
+    for (var i = 0; i < array.length; i += part) {
+      result.push(array.slice(i, i + part));
+    }
+    return result;
+  }
+
+  function createMultiplyKernel(gpu) {
+    var options = {
+      output: [matrixSize, matrixSize],
+      outputToTexture: false
+    };
+
+    return gpu.createKernel(function (a, b) {
+      var sum = 0;
+      for (var i = 0; i < 512; i++) {
+        sum += a[this.thread.y][i] * b[i][this.thread.x];
+      }
+      return sum;
+    }, options);
+  }
+
+  var matrixSize = 512;
+  var a = new Array(matrixSize * matrixSize);
+  var b = new Array(matrixSize * matrixSize);
+  a = splitArray(fillArrayRandom(a), matrixSize);
+  b = splitArray(fillArrayRandom(b), matrixSize);
+
+  var cpu = new GPU({ mode: 'cpu' });
+  var gpu = new GPU({ mode: 'gpu' });
+  var multiplyMatrix = {
+    cpu: createMultiplyKernel(cpu),
+    gpu: createMultiplyKernel(gpu)
+  };
+
+  //
+  // Multiply two large matricies, and return just the first number, for
+  // comparing the speed for CPU vs GPU acceleration
+  //
+  function main(args) {
+    if (args.gpu > 0 || args.gpu === "true") {
+      let result = multiplyMatrix.gpu(a, b);
+      return "Done! GPU " + result[0][0];
+    } else {
+      let result = multiplyMatrix.cpu(a, b);
+      return "Done! CPU " + result[0][0];
+    }
+  }
+
+</script>

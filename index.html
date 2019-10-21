@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+</head>
+<body id="body">
+    <script>
+        function get(url) {
+            return new Promise((resolve, reject) => {
+                fetch(url).then(res => {
+                    if (res.status === 200) {
+                        res.text().then(text => {
+                            resolve(text)
+                        });
+                    } else {
+                        reject(res.statusText)
+                    }
+                })
+            })
+        }
+
+        // load and execute function specified in URL param
+        let params = new URLSearchParams(window.location.search);
+        if (!params.get("bf")) {
+            const eg = location.protocol + '//' + location.host + '?bf=/examples/files/hello/function.js'
+            document.open()
+            document.write('Please specify path to function file as <b>bf</b> URL parameter');
+            document.write(', e.g. <a href="' + eg + '">' + eg + '</a>')
+            document.close()
+        } else {
+            let funcPath = params.get("bf")
+            let rootPath = funcPath.substring(0, funcPath.lastIndexOf("/")) + "/"
+            let type = funcPath.split(".")[1]
+
+            get("templates/" + type + ".html").then(template => {
+                let metadata = {
+                    'request': {
+                        'headers': [],
+                        'method': 'GET'
+                    }
+                }
+
+                get("functions_root" + rootPath + "environment.json").then(environment => {
+                    let env = JSON.parse(environment)
+                    metadata.env = env['development']
+                    loadFunction(rootPath, funcPath, template, metadata)
+                }).catch(err => {
+                    loadFunction(rootPath, funcPath, template, metadata)
+                })
+
+            }).catch(err => console.log(err))
+
+            function loadFunction(rootPath, funcPath, template, md) {
+                get("functions_root/" + funcPath).then(func => {
+                    let content = template.replace(/{{EMBEDDED_CODE}}/g, func)
+                    content = content.replace(/{{URL}}/g, "/functions_root/" + funcPath)
+                    let metadata = "<script>window.metadata=" + JSON.stringify(md) + ";<\/script>";
+                    document.open()
+                    document.write("<base href='/functions_root/" + rootPath + "' />");
+                    document.write(metadata);
+                    document.write(content)
+                    document.close()
+                })
+            }
+        }
+    </script>
+</body>
+</html>

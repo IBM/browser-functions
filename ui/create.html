@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create</title>
+
+    <script type="text/javascript" src="/assets/carbon-components@10.3.2/carbon-components.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/assets/carbon-components@10.3.2/carbon-components.min.css"/>
+
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.42.2/codemirror.min.js"></script>
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.42.2/mode/javascript/javascript.min.js"></script>
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.42.2/mode/xml/xml.min.js"></script>
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.42.2/mode/css/css.min.js"></script>
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.42.2/mode/htmlmixed/htmlmixed.min.js"></script>
+    <link rel="stylesheet" type="text/css"
+          href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.42.2/codemirror.min.css"/>
+
+
+    <style>
+        body, html {
+            height: 100%;
+        }
+
+        .bx--snippet--single .bx--snippet-container {
+            overflow-x: auto;
+        }
+
+        .bx--modal-content {
+            overflow-y: unset;
+        }
+
+        .buttons {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .buttons > * {
+            margin-top: 2rem;
+            margin-right: 1rem;
+        }
+
+        #code-form {
+            padding: 2rem;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        #function-name {
+            margin-bottom: 2rem;
+        }
+
+        bx-notification {
+            display: none;
+        }
+
+        #language-label {
+            width: 100%;
+            text-align: end;
+            box-sizing: border-box;
+        }
+    </style>
+
+    <!--INJECT_SERVER_VARS-->
+
+    <script type="module">
+        import '/components/page-header.js'
+        import '/components/page-container.js'
+        import '/components/bx-button.js'
+        import '/components/bx-notification.js'
+        import '/components/page-footer.js'
+        import {$} from '/utils/utils.js'
+
+        const languageExtensions = {
+            js: { mode: 'javascript', label: 'JavaScript'},
+            json: { mode: 'javascript', label: 'JSON'},
+            html: { mode: 'htmlmixed', label: 'HTML'},
+        }
+
+        const initialValues = {
+            javascript: `
+/*
+ * You must expose a function named main
+ */
+function main(args) {
+
+    // add custom logic here
+
+    return 'Hello World!'
+
+}`,
+            htmlmixed: `
+<script>
+    /*
+     * You must expose a function named main
+     */
+    function main(args) {
+
+        // add custom logic here
+
+        return 'Hello World!'
+
+    }
+<\/script>
+`
+        }
+        let codeEditor
+
+        window.addEventListener('load', function () {
+            codeEditor = CodeMirror.fromTextArea($("#code"), {
+                lineNumbers: true,
+            });
+
+            $('#cancel-button').addEventListener('click', () => {
+                window.location.href = '/' + window.location.search
+            })
+
+            $('#create-button').addEventListener('click', () => {
+                codeEditor.save() // ensure the text area has the correct data in it
+                submitForm()
+            })
+
+            $('#txtFncName').addEventListener('input', (e) => {
+                tryToDetermineLanguageFromFileName(e.target.value)
+            })
+
+            setInitialValues()
+            if ($("#txtFncName").value) {
+                tryToDetermineLanguageFromFileName($("#txtFncName").value)
+            }
+        })
+
+        function unescapeHtml(text) {
+            return text
+                .replace(/&amp;/g, '&' )
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')
+                .replace(/&#039;/g, "'");
+        }
+
+        function setInitialValues() {
+            const serverVars = window.serverVars
+            if (!serverVars) {
+                return
+            }
+            if (serverVars.functionName) {
+                $("#txtFncName").value = serverVars.functionName
+                $("#txtFncName").setAttribute("readonly", "")
+            }
+
+            if (serverVars.code) {
+                $("#code").value = serverVars.code
+                codeEditor.setOption("value", unescapeHtml(serverVars.code))
+            }
+        }
+
+        function submitForm() {
+            const formData = new FormData($('#code-form'))
+            const fileName = formData.get('functionName')
+
+            let url = '/static/' + fileName + window.location.search
+
+            fetch(url, {
+                method: 'PUT',
+                body: formData.get('code')
+            })
+            .then((res) => {
+                if (res.status === 200) {
+                    window.location.href = '/' + window.location.search
+                    $('bx-notification').hide()
+                } else {
+                    res.text().then((msg) => {
+                        $('bx-notification').setAttribute('subtitle', msg)
+                        $('bx-notification').show()
+                    })
+                }
+            })
+            .catch((err) => {
+                console.error(err)
+            })
+        }
+
+        function tryToDetermineLanguageFromFileName(filename) {
+            const items = filename.split('.')
+            if (items.length > 1) {
+                const lastItem = items[items.length - 1].toLowerCase()
+                if (languageExtensions[lastItem]) {
+                    setCodeLanguage(languageExtensions[lastItem])
+                } else {
+                    clearCodeLanguage()
+                }
+            } else {
+                clearCodeLanguage()
+            }
+        }
+
+        function clearCodeLanguage() {
+            codeEditor.setOption("mode", '')
+            $('#language-label').innerText = 'No language detected'
+        }
+
+        function setCodeLanguage(lang) {
+            codeEditor.setOption("mode", lang.mode)
+            $('#language-label').innerText = lang.label
+        }
+
+    </script>
+</head>
+<body>
+
+<page-header></page-header>
+
+<page-container>
+
+    <bx-notification type="error" title="Error" subtitle="error"></bx-notification>
+
+    <form id="code-form" class="form" action="/create" method="post" enctype="multipart/form-data">
+
+        <div id="function-name" class="bx--form-item">
+            <label for="txtFncName" class="bx--label">Function name</label>
+            <div class="bx--form__helper-text">
+                Include the file extension in the name
+            </div>
+            <input id="txtFncName" type="text" name="functionName" class="bx--text-input login-input"
+                   placeholder="my-awesome-function">
+        </div>
+
+        <label id="language-label" class="bx--label"></label>
+        <textarea name="code" id="code" required></textarea>
+
+        <div class="bx--form-item">
+            <div class="buttons">
+                <bx-button id="cancel-button" type="tertiary">Cancel</bx-button>
+                <bx-button id="create-button" type="secondary" icon="plus">Save</bx-button>
+            </div>
+        </div>
+    </form>
+
+</page-container>
+
+<page-footer></page-footer>
+
+</body>
+</html>

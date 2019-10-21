@@ -1,0 +1,10 @@
+node_modules/
+.idea/
+jmeter.log
+*.retry
+err.log
+out.log
+.cache/
+.pnp/
+dist/
+application.log

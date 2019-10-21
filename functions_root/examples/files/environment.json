@@ -1,0 +1,14 @@
+{
+    "development": {
+        "password": "YOUR_DEV_PASSWORD",
+        "db_url": "YOUR_DB_URL",
+        "db_key": "YOUR_DB_KEY",
+        "db_token": "YOUR_DB_TOKEN"
+    },
+    "production": {
+        "password": "YOUR_PROD_PASSWORD",
+        "db_url": "YOUR_DB_URL",
+        "db_key": "YOUR_DB_KEY",
+        "db_token": "YOUR_DB_TOKEN"
+    }
+}

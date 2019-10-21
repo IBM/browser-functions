@@ -1,0 +1,35 @@
+<!-- Load TensorFlow.js. This is required to use MobileNet. -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.11.7"></script>
+<!-- Load the MobileNet model. -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@0.1.1"></script>
+
+<!-- Replace this with your image. Make sure CORS settings allow reading the image! -->
+<img id="img" crossorigin="anonymous" src=""></img>
+
+<!-- Place your code in the script tag below. You can also use an external .js file -->
+<script>
+    // Notice there is no 'import' statement. 'mobilenet' and 'tf' is
+    // available on the index-page because of the script tag above.
+    function main(args) {
+        if (tf.getBackend() !== "webgl") {
+            return "ERROR: WebGL is not supported on this browser: " + navigator.userAgent
+        }
+
+        return mobilenet.load().then(model => {
+            return new Promise(function(resolve, reject){
+                const img = document.getElementById('img');
+
+                img.onload = function(){
+                    // Classify the image.
+                    resolve(model.classify(img))
+                }
+
+                img.onerror = function(err){
+                    reject(err)
+                }
+
+                img.src = args.img || "cat.jpg"
+            })
+        });
+    }
+</script>

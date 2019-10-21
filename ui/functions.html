@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Functions</title>
+    <script type="text/javascript" src="./assets/carbon-components@10.3.2/carbon-components.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="./assets/carbon-components@10.3.2/carbon-components.min.css"/>
+    <style>
+        body {
+            height: 100%;
+        }
+
+        .buttons {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-end;
+            margin-top: 2rem;
+
+        }
+
+        .buttons > * {
+            margin-left: 1em;
+        }
+
+        #function-list {
+            width: 100%;
+            max-width: 1000px;
+            margin-top: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        #no-functions {
+            display: none;
+            margin: 2rem;
+            text-align: center;
+        }
+
+        page-container {
+            box-sizing: border-box;
+        }
+
+        .highlight {
+            background-color: #c9c9c9;
+        }
+
+        .application-form {
+            width: 100%;
+            max-width: 1000px;
+            background-color: white;
+            margin-top: 2rem;
+            padding: 2rem;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+
+        .application-form > * {
+            flex-grow: 1;
+        }
+
+        .info-item {
+            margin-bottom: 1rem;
+        }
+
+        .info-item .label {
+            font-weight: 600;
+        }
+
+        #execution-environment {
+            margin-bottom: 1rem;
+        }
+
+        #save-button {
+            width: 75px;
+        }
+
+    </style>
+
+    <script src="utils/browser-check.js"></script>
+    <script type="module">
+        import './components/page-container.js'
+        import './components/page-header.js'
+        import './components/user-app.js'
+        import './components/bx-button.js'
+        import './components/page-footer.js'
+
+        import {$, formToJSON} from './utils/utils.js'
+
+        window.addEventListener('load', function () {
+            fetchFunctionData()
+        })
+
+        function fetchFunctionData() {
+            fetch('/functions' + window.location.search)
+                .then(response => response.json())
+                .then(renderData)
+                .catch(err => {
+                    // set error text
+                })
+        }
+
+        function renderData(data) {
+            const functionList = $('#function-list')
+            functionList.clear()
+
+            for (let app of Object.keys(data)) {
+                renderFunctions(app, data[app])
+                renderAppData(data[app].settings)
+            }
+        }
+
+        function renderFunctions(app, appData) {
+            const functionList = $('#function-list')
+
+            const userApp = document.createElement('user-app')
+            userApp.setAttribute('app-name', app)
+            userApp.readOnly = appData.settings.readonly || false;
+            userApp.functions = appData.functions
+
+            window.addEventListener('edit', (e) => editFunction(app, e.detail.functionName))
+
+            if (!appData.settings.readonly) {
+                userApp.addEventListener('delete', (e) => deleteFunction(app, e.detail.functionName))
+                setUpDragAndDrop()
+            }
+
+            if (Object.keys(appData.functions).length > 0) {
+                functionList.appendChild(userApp)
+                $('#no-functions').hide()
+            } else {
+                $('#no-functions').show()
+                $('#create-link').href = "/create" + window.location.search
+            }
+        }
+
+        function renderAppData(settings) {
+            $("#author").innerText = settings.author || ""
+            $("#access-key").innerText = settings["access-key"]
+            $("#applicationId").innerText = settings.applicationId
+            $("#controller-url").innerText = settings.controllerUrl + "&tabs=2"
+
+            if ($("#execution-environment").isDirty) {
+                // dont overwrite user data that they haven't saved yet
+                return
+            }
+
+            for (let checkbox of document.querySelectorAll('input[type="checkbox"]')) {
+                checkbox.checked = false
+            }
+
+            for (let env of settings["execution-environments"]) {
+                $(`#checkbox-${env}`).checked = true
+            }
+
+            $("#execution-environment").addEventListener('change', () => {
+                $("#execution-environment").isDirty = true
+                $("#save-button").enable()
+            })
+
+            $("#save-button").addEventListener('click', () => {
+
+                save().then(() => {
+                    $("#save-button").disable()
+                })
+
+            })
+        }
+
+        async function editFunction(appId, functionName) {
+            window.location.href = `/edit/${functionName}` + window.location.search
+        }
+
+        async function deleteFunction(appId, functionName) {
+            if (confirm('Are you sure you want to delete ' + functionName + '?')) {
+                return fetch(`/functions/${appId}/${functionName}` + window.location.search, {method: 'DELETE'})
+                    .then(() => fetchFunctionData())
+            }
+        }
+
+        async function save() {
+            let url = "/application/edit" + window.location.search
+            const formJson = formToJSON($("#execution-environment-form"))
+
+            if (typeof formJson["execution-environments"] === "string") {
+                formJson["execution-environments"] = [formJson["execution-environments"]]
+            }
+            return fetch(url, {
+                method: 'POST',
+                body: JSON.stringify(formJson),
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+        }
+
+        function setUpDragAndDrop() {
+            const dropArea = $('page-container')
+            $('#drop-area').style.display = 'block';
+
+            const preventDefaults = (e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                }
+
+            ;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false)
+            })
+
+            const highlight = (e) => {
+                dropArea.classList.add('highlight')
+            }
+
+            const unhighlight = (e) => {
+                    dropArea.classList.remove('highlight')
+                }
+
+            ;['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false)
+            })
+
+            ;['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false)
+            })
+
+            dropArea.addEventListener('drop', async function (event) {
+                event.preventDefault();
+                let items = await getAllFileEntries(event.dataTransfer.items);
+                console.log(items)
+                uploadFiles(items)
+            });
+        }
+
+        // Drop handler function to get all files
+        async function getAllFileEntries(dataTransferItemList) {
+            let fileEntries = [];
+            // Use BFS to traverse entire directory/file structure
+            let queue = [];
+            // Unfortunately dataTransferItemList is not iterable i.e. no forEach
+            for (let i = 0; i < dataTransferItemList.length; i++) {
+                queue.push(dataTransferItemList[i].webkitGetAsEntry());
+            }
+            while (queue.length > 0) {
+                let entry = queue.shift();
+                if (entry.isFile) {
+                    fileEntries.push(entry);
+                } else if (entry.isDirectory) {
+                    let reader = entry.createReader();
+                    queue.push(...await readAllDirectoryEntries(reader));
+                }
+            }
+            return fileEntries;
+        }
+
+        // Get all the entries (files or sub-directories) in a directory by calling readEntries until it returns empty array
+        async function readAllDirectoryEntries(directoryReader) {
+            let entries = [];
+            let readEntries = await readEntriesPromise(directoryReader);
+            while (readEntries.length > 0) {
+                entries.push(...readEntries);
+                readEntries = await readEntriesPromise(directoryReader);
+            }
+            return entries;
+        }
+
+        // Wrap readEntries in a promise to make working with readEntries easier
+        async function readEntriesPromise(directoryReader) {
+            try {
+                return await new Promise((resolve, reject) => {
+                    directoryReader.readEntries(resolve, reject);
+                });
+            } catch (err) {
+                console.log(err);
+            }
+        }
+
+        function uploadFiles(files) {
+            ([...files]).forEach((fileEntry) => {
+                fileEntry.file((file) => {
+                    uploadItem(file, fileEntry.fullPath)
+                })
+            })
+        }
+
+        function uploadItem(item, fullPath) {
+            console.log(item)
+            console.log(fullPath)
+
+            let url = '/function/create' + window.location.search
+            let formData = new FormData()
+
+            formData.append('file', item)
+            formData.append('fullPath', fullPath)
+
+            fetch(url, {
+                method: 'POST',
+                body: formData
+            })
+            .then(() => {
+                console.log('done')
+                fetchFunctionData()
+            })
+            .catch((err) => {
+                console.error(err)
+            })
+        }
+
+    </script>
+</head>
+<body>
+
+<page-header></page-header>
+
+
+<page-container>
+    <div class="application-form">
+        <div>
+            <div class="info-item">
+                <span class="label">Application Name:</span>
+                <span id="applicationId" class="value"></span>
+            </div>
+            <div class="info-item">
+                <span class="label">Author:</span>
+                <span id="author" class="value"></span>
+            </div>
+            <div class="info-item">
+                <span class="label">Access-key:</span>
+                <span id="access-key" class="value"></span>
+            </div>
+            <div id="controller-url-block" class="info-item">
+                <span class="label">Custom Controller URL:</span><br>
+                <span id="controller-url" class="value"></span>
+            </div>
+        </div>
+
+        <form id="execution-environment-form" class="form" action="/application/edit" method="post">
+            <fieldset class="bx--fieldset" id="execution-environment">
+                <legend class="bx--label">Execution Environments</legend>
+
+                <div class="bx--form-item bx--checkbox-wrapper">
+                    <input id="checkbox-master-chrome" class="bx--checkbox" type="checkbox" value="master-chrome" name="execution-environments">
+                    <label for="checkbox-master-chrome" class="bx--checkbox-label">Hosted Chrome</label>
+                </div>
+
+                <div class="bx--form-item bx--checkbox-wrapper">
+                    <input id="checkbox-master-firefox" class="bx--checkbox" type="checkbox" value="master-firefox" name="execution-environments">
+                    <label for="checkbox-master-firefox" class="bx--checkbox-label">Hosted Firefox</label>
+                </div>
+
+                <div class="bx--form-item bx--checkbox-wrapper">
+                    <input id="checkbox-user" class="bx--checkbox" type="checkbox" value="user" name="execution-environments">
+                    <label for="checkbox-user" class="bx--checkbox-label">User</label>
+                </div>
+            </fieldset>
+
+            <bx-button id="save-button" disabled type="tertiary" size="small">Save</bx-button>
+        </form>
+    </div>
+
+    <div id="no-functions">
+        You do not have any functions yet
+    </div>
+
+    <div id="function-list">
+    </div>
+
+    <div id="drop-area" style="margin: 2em; display: none">
+        Drag files here to upload or write code by clicking <a id="create-link" href="/">Create Function</a>
+    </div>
+
+</page-container>
+
+<page-footer></page-footer>
+
+</body>
+</html>

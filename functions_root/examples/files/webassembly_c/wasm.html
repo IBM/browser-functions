@@ -1,0 +1,33 @@
+<script>
+    var Module = {}
+
+    Module.noInitialRun = true;
+
+    const initialized = new Promise((resolve, reject) => {
+        Module.onRuntimeInitialized = () => {
+            resolve()
+        }
+    })
+
+    async function main(args, metadata) {
+        let programsArgs = []
+        if (args) {
+            for (let [key, value] of Object.entries(args)) {
+                programsArgs.push(`${key}=${value}`);
+            }
+        }
+        if (!args.name) {
+            programsArgs.push('name=world')
+        }
+
+        // ensure the WebAssembly has loaded before we attempt to call main
+        await initialized
+        Module.callMain(programsArgs)
+    }
+
+</script>
+
+<script src="hello.js"></script>
+
+
+

@@ -1,0 +1,167 @@
+<html>
+
+<head>
+    <!-- This script is served auto-magically from the socket.io express middleware -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        navigator.browserSpecs = (function () {
+            var ua = navigator.userAgent, tem,
+                M = ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
+            if (/trident/i.test(M[1])) {
+                tem = /\brv[ :]+(\d+)/g.exec(ua) || [];
+                return {name: 'IE', version: (tem[1] || '')};
+            }
+            if (M[1] === 'Chrome') {
+                tem = ua.match(/\b(OPR|Edge)\/(\d+)/);
+                if (tem != null) return {name: tem[1].replace('OPR', 'Opera'), version: tem[2]};
+            }
+            M = M[2] ? [M[1], M[2]] : [navigator.appName, navigator.appVersion, '-?'];
+            if ((tem = ua.match(/version\/(\d+)/i)) != null)
+                M.splice(1, 1, tem[1]);
+            return {name: M[0], version: M[1]};
+        })();
+    </script>
+    <script>
+        const currentJobs = {}
+        const tabData  = {}
+        const freeTabs = []
+        const params = new URLSearchParams(window.location.search)
+        let MAX_WORKERS = params.get("tabs") * 1 || 2;
+        const jobQueue = []
+
+        const socket = io.connect('/controller');
+
+        socket.on('connect', function () {
+            console.log('connected to server')
+            socket.emit('IDENTITY', { accessKey: params.get("access-key"), ...navigator.browserSpecs } );
+        });
+
+        socket.on('EXECUTE', function (data) {
+            jobQueue.push(data)
+            attemptJobExecution()
+        });
+
+        function attemptJobExecution() {
+            if (jobQueue.length > 0 && freeTabs.length > 0) {
+                const job = jobQueue.shift()
+                currentJobs[job.jobId] = freeTabs.shift()
+                let tab = currentJobs[job.jobId]
+
+                if (!tab) {
+                    tab = tab.open('about:blank')
+                }
+
+                tabData[job.jobId] = {
+                    lastActivity: new Date().getTime(),
+                    job: job,
+                    tab: tab
+                }
+                currentJobs[job.jobId].location.href = `${job.url}?invoke=1&jobId=${job.jobId}`;
+            }
+        }
+
+        function completeJob(jobId, result) {
+            socket.emit("JOB_COMPLETED", { jobId: jobId, response: result })
+            freeTab(jobId)
+        }
+
+        function streamJob(jobId, result) {
+            socket.emit("JOB_STREAM", { jobId: jobId, response: result })
+        }
+
+        function streamConsole(jobId, type, message) {
+            socket.emit("CONSOLE", { jobId: jobId, type: type, message: message })
+        }
+
+        function failJob(jobId, err) {
+            socket.emit("JOB_FAILED", { jobId: jobId, response: err })
+            freeTab(jobId)
+        }
+
+        function freeTab(jobId) {
+            if (!jobId) return
+            let jobTab = currentJobs[jobId]
+            delete currentJobs[jobId]
+            delete tabData[jobId]
+
+            if (jobTab) {
+                try {
+                    // re-use the tab
+                    jobTab.location.href = 'about:blank';
+                    freeTabs.push(jobTab)
+                } catch (e) {
+                    // some browsers won't allow re-use, so close and re-open
+                    jobTab.close()
+                    freeTabs.push(window.open('about:blank'))
+                }
+            }
+
+            attemptJobExecution()
+        }
+
+        // Listen to messages from the worker
+        window.addEventListener("message", (event) => {
+            const jobId = event.data.jobId
+            switch (event.data.event) {
+                case 'JOB_COMPLETED':
+                    completeJob(jobId, event.data.result)
+                    break;
+                case 'CONSOLE':
+                    streamConsole(jobId, event.data.type, event.data.message)
+                    break;
+                case 'JOB_STREAM':
+                    streamJob(jobId, event.data.result)
+                    break;
+                case 'JOB_FAILED':
+                    failJob(jobId, event.data.error)
+                    break;
+                case 'JOB_WATCHDOG_RESET':
+                    if (tabData[event.data.jobId]) {
+                        tabData[event.data.jobId].lastActivity = new Date().getTime()
+                    }
+                    break;
+                case 'GET_JOB_DATA':
+                    event.source.postMessage({
+                        'event': 'JOB_DATA',
+                        'jobData': getJobData(event.data.jobId)
+                    }, "*")
+                    break;
+                default:
+                    console.error(`Unknown event type ${event.data.event}`)
+                    break;
+            }
+        }, false);
+
+        function getJobData(jobId) {
+            return tabData[jobId].job
+        }
+
+        function main() {
+            for (let i = 0; i < MAX_WORKERS; i ++) {
+                const tab = window.open('about:blank')
+                freeTabs.push(tab)
+            }
+
+            // keep checking tabs for watchdog timeouts
+            setInterval(function() {
+                let now = new Date().getTime()
+                for (let jobId in tabData) {
+                    if (now - tabData[jobId].lastActivity > 2000) {
+                        console.log(jobId + " timed out!")
+                        failJob(jobId, 'Timed out')
+                    }
+                }
+            }, 500);
+        }
+
+        main();
+    </script>
+</head>
+
+<body>
+
+This is the controller
+
+</body>
+
+</html>

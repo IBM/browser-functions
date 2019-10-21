@@ -1,0 +1,49 @@
+<img id="input-image" src="">
+
+<img id="output-image">
+
+<script>
+
+function main(args, md) {
+    setHeader('Content-Type', 'text/html')
+
+    return new Promise((resolve, reject) => {
+        // load an image, then resize and apply some CSS filters
+        let img = document.getElementById("input-image");
+        img.height = 92;
+        img.width = 92;
+
+        img.onerror = function(err) {
+            reject(err)
+        }
+
+        img.onload = function() {
+            const result = getBase64Image(
+                document.getElementById('input-image'),
+                'blur(1px) grayscale(100%)'); // CSS filters
+
+            // display result for debugging purposes, not needed in prod
+            document.getElementById('output-image').src = result
+
+            resolve(`<img src="${result}" >`); // can also return raw data
+        };
+
+        img.src = args.img || 'nelson-mandela-bridge.jpg';
+    });
+}
+
+function getBase64Image(img, applyFilter) {
+    var canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    var ctx = canvas.getContext("2d");
+    ctx.filter = applyFilter;
+
+    ctx.drawImage(img, 0, 0, img.width, img.height);
+    var dataURL = canvas.toDataURL("image/png");
+
+    return dataURL;
+}
+
+</script>

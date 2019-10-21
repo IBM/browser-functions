@@ -1,0 +1,78 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <title>WebGL Globe_World Elevation</title>
+    <meta charset="utf-8">
+    <style type="text/css">
+        body {
+            background-color: #101010;
+            margin: 0px;
+            overflow: hidden;
+
+            color: #ffffff;
+            font-family: sans-serif;
+            font-size: 13px;
+        }
+
+        #title {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            font-size: 30px;
+            font-family: Candara;
+            line-height: 20px;
+            width: 400px;
+            padding: 40px;
+        }
+
+        #info {
+            position: absolute;
+            top: 30px;
+            left: 0px;
+            width: 300px;
+            padding: 40px;
+        }
+
+        #more {
+            position: absolute;
+            bottom: 0px;
+            right: 0px;
+            width: 300px;
+            padding: 40px;
+        }
+
+        a {
+            color: #0080ff;
+        }
+    </style>
+</head>
+<body>
+
+<div id="container"></div>
+<div id="title">
+    World Elevation
+</div>
+<div id="info">
+    Powered by <a href="http://www.chromeexperiments.com/globe/">WebGL Globe</a><br />
+    Data from <a href="http://resources.arcgis.com/en/help/main/10.1/009t/009t00000244000000.htm">Esri</a> processed by <a href="http://newnaw.com">diligentpig</a><br />
+    Released under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License</a>
+</div>
+
+<script type="text/javascript" src="js/RequestAnimationFrame.js"></script>
+<script type="text/javascript" src="js/ThreeWebGL.js"></script>
+<script type="text/javascript" src="js/ThreeExtras.js"></script>
+
+<script type="text/javascript" src="elevation_15000.json"></script>
+<script type="text/javascript" src="globe.js"></script>
+
+<script>
+
+    function main(args) {
+        init(args)
+        return `<img src="${snapshot}">`;
+    }
+</script>
+
+</body>
+
+</html>

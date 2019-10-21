@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Documentation</title>
+    <script type="text/javascript" src="/assets/carbon-components@10.3.2/carbon-components.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/assets/carbon-components@10.3.2/carbon-components.min.css"/>
+    <script src="/assets/highlightjs/highlight.min.js"></script>
+
+    <style>
+        body, html {
+            height: 100%;
+        }
+
+        .menuItems {
+            height: 100%;
+        }
+
+    </style>
+
+    <script src="/utils/browser-check.js"></script>
+    <script type="module">
+        import '/components/page-header.js'
+        import '/components/page-container.js'
+        import '/components/markdown-container.js'
+        import '/components/page-footer.js'
+
+        import {$, fetchMarkdownAsHtml} from '/utils/utils.js'
+
+        window.onload = async () => {
+            setupRouting()
+            await renderNavigation()
+        }
+
+        const currentPage = () => window.location.search.substring(1) || "index.md"
+
+        function setupRouting() {
+            setPage(currentPage())
+        }
+
+        async function setPage(page) {
+            $("markdown-container").value = await fetchMarkdownAsHtml('/docs/' + page)
+            window.scrollTo(0,0)
+        }
+
+        async function renderNavigation() {
+            const pageHeader = $('page-header')
+            const pageContent = await fetchMarkdownAsHtml('/docs/navigation.md')
+            const menuItemsSlot = pageHeader.querySelector('[slot="menuItems"]')
+            menuItemsSlot.innerHTML = pageContent
+
+            menuItemsSlot.querySelectorAll("ul").forEach((ul) => {
+                ul.classList.add("bx--header__menu-bar")
+                ul.setAttribute('role', 'menubar')
+            })
+
+            menuItemsSlot.querySelectorAll("a").forEach((ul) => {
+                ul.classList.add("bx--header__menu-item")
+                ul.setAttribute('role', 'menuitem')
+            })
+        }
+
+    </script>
+</head>
+<body>
+<page-header>
+    <span slot="menuItems" class="menuItems">
+    </span>
+
+</page-header>
+<page-container>
+    <markdown-container></markdown-container>
+</page-container>
+
+<page-footer></page-footer>
+
+</body>
+</html>

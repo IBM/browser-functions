@@ -1,0 +1,40 @@
+{
+    "name": "browser-functions",
+    "version": "1.0.0",
+    "description": "Functions as a service, executed by a browser",
+    "main": "index.js",
+    "scripts": {
+        "start": "nodemon --inspect server/server.js | pino-pretty -t SYS:standard -i hostname",
+        "start:prod": "NODE_ENV=production node server/server.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git@github.com/IBM/browser-functions.git"
+    },
+    "nodemonConfig": {
+        "ignore": [
+            "functions_root/*"
+        ]
+    },
+    "contributors": [
+        "Toby Kurien <toby.kurien@za.ibm.com>",
+        "Richard Young <richard.young2@ibm.com>"
+    ],
+    "license": "Apache-2.0",
+    "dependencies": {
+        "body-parser": "1.18.3",
+        "chokidar": "3.2.1",
+        "connect-timeout": "1.9.0",
+        "express": "4.16.4",
+        "formidable": "1.2.1",
+        "pino": "5.12.6",
+        "puppeteer": "1.18.1",
+        "puppeteer-firefox": "0.5.0",
+        "socket.io": "2.3.0",
+        "tail": "2.0.2"
+    },
+    "devDependencies": {
+        "nodemon": "1.18.9",
+        "pino-pretty": "3.2.0"
+    }
+}

@@ -1,0 +1,11 @@
+{
+    "readonly": true,
+    "access-key": "examples",
+    "execution-environments": [
+        "master-chrome",
+        "master-firefox",
+        "user"
+    ],
+    "applicationId": "examples",
+    "controllerUrl": "http://examples.browserfunctions.test:3000/controller?access-key=examples"
+}
