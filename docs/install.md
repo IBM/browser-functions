@@ -45,7 +45,7 @@ variable is set to `production`.
 
 ### Host
 When running in production there must be an environment variable called `HOST` which should be the domain name that has been registered 
-for your server eg. browserfunctions.com
+for your server eg. browserfunctions.test
 
 ### Master access key
 When running in production there must be an environment variable called `MASTER_ACCESS_KEY`. This is used for accessing the admin console

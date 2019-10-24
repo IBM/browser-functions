@@ -6,7 +6,7 @@ Browser Functions consists of a server component (written in NodeJS), and one or
 
 The quickest way to get started is to write a function and deploy it to a running Browser Functions server.
 
-- Login to the server (e.g. `browserfunctions.com`), create new credentials if you don't already have one
+- Login to the server (e.g. `browserfunctions.test`), create new credentials if you don't already have one
 - Click to create a new function with name `myfunc.js` with the following content (or drag in an already-created file):
 
 ```javascript
@@ -14,10 +14,10 @@ function main(args) {
   return "Hello, " + (args.name || "world");
 }
 ```
-- Execute the function by opening the URL shown in the list, in a browser, e.g. `https://examples.browserfunctions/execute/hello/function.js`, and the function should respond with `Hello, world`.
-- Pass in a `name` argument in the URL: `https://examples.browserfunctions/execute/hello/function.js?name=Toby`, and the function should respond with `Hello, Toby`
+- Execute the function by opening the URL shown in the list, in a browser, e.g. `https://examples.browserfunctions.test/execute/hello/function.js`, and the function should respond with `Hello, world`.
+- Pass in a `name` argument in the URL: `https://examples.browserfunctions.test/execute/hello/function.js?name=Toby`, and the function should respond with `Hello, Toby`
 - See the [API](?api.md) documentation for more details on creating your own functions.
-- You can also view and execute the [example](https://examples.browserfunctions.com/?access-key=examples) functions
+- You can also view and execute the [example](https://examples.browserfunctions.test/?access-key=examples) functions
 
 ## Testing and Debugging your function
 

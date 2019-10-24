@@ -31,7 +31,7 @@ Browser Functions uses "containers" to execute your code, where the containers a
 
 ![System architecture](images/system-architecture.png)
 
-Requests come into the server, which then forwards it onto an available browser controller. The controller launches the request into a free tab, calls the `main()` function, and returns the result back to the server, which then forwards it back to the client. In order to maintain isolation between different applications, each application is given a different domain name (which is a sub-domain of the server's domain), e.g. `app1.browserfunctions.com`.
+Requests come into the server, which then forwards it onto an available browser controller. The controller launches the request into a free tab, calls the `main()` function, and returns the result back to the server, which then forwards it back to the client. In order to maintain isolation between different applications, each application is given a different domain name (which is a sub-domain of the server's domain), e.g. `app1.browserfunctions.test`.
 
 # What are the benefits?
 
@@ -113,4 +113,4 @@ Since it is a browser environment, you can have HTML, and even make use of CDNs 
 </script>
 ```
 
-You can view and execute the [example](https://examples.browserfunctions.com/?access-key=examples) functions. See the [Quickstart](?quickstart.md) section to get started, and then use the [API reference](?api.md) to create your functions.
+You can view and execute the [example](https://examples.browserfunctions.test/?access-key=examples) functions. See the [Quickstart](?quickstart.md) section to get started, and then use the [API reference](?api.md) to create your functions.

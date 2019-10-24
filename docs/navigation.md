@@ -1,5 +1,5 @@
 - [Documentation](?index.md)
 - [Quickstart](?quickstart.md)
 - [API](?api.md)
-- [Examples](https://examples.browserfunctions.com/?access-key=examples)
+- [Examples](https://examples.browserfunctions.test/?access-key=examples)
 - [Performance](?performance.md)
