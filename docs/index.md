@@ -59,7 +59,7 @@ There is no need to learn a new API - your code is the same code that runs on al
 
 ## Hardware acceleration
 
-Modern browsers feature hardware-accelerated capability, such as WebGL (which takes advantage of GPU hardware), and Web Assembly (which provides native execution speed on the CPU). Your functions can make use of this, for example by performing [GPU-accelerated matrix multiplication](https://github.ibm.com/Browser-Backend/browser_backend/tree/master/functions_root/examples/files/gpu_matrix_multiply) or [rendering WebGL on the server](https://github.ibm.com/Browser-Backend/browser_backend/tree/master/functions_root/examples/files/webgl)
+Modern browsers feature hardware-accelerated capability, such as WebGL (which takes advantage of GPU hardware), and Web Assembly (which provides native execution speed on the CPU). Your functions can make use of this, for example by performing [GPU-accelerated matrix multiplication](https://github.com/IBM/browser-functions/browser_backend/tree/master/functions_root/examples/files/gpu_matrix_multiply) or [rendering WebGL on the server](https://github.com/IBM/browser-functions/browser_backend/tree/master/functions_root/examples/files/webgl)
 
 ## Local development
 

@@ -6,7 +6,7 @@
 
 If you want to run the server locally (or on your own server), install it as follows:
 
-- Download [this ZIP](https://github.ibm.com/Browser-Backend/browser_backend/archive/master.zip) file and unzip it to a folder.
+- Download [this ZIP](https://github.com/IBM/browser-functions/browser_backend/archive/master.zip) file and unzip it to a folder.
 - In the folder, run `npm install`. This will install the necessary software components.
 - Browser Functions uses sub-domains to separate applications from each other, so for local development, you will need to add the domain names into your `/etc/hosts` file pointing to localhost (see below for using dnsmasq instead). Start with the following:
 
