@@ -5,37 +5,38 @@ Browser Functions
 
 # What is it?
 
-Browser Functions is a platform for running functions inside a browser, on a server. Any code executable by a modern browser, such as HTML, JavaScript, CSS, or even Web Assembly, can be executed inside Browser Functions. The functions are actually executed within tabs inside a browser (e.g. Chrome or Firefox). This means that front-end code can be used directly in the backend.
+Browser Functions is a platform for running functions written using the Web API, on a server. Any code executable by a modern browser, such as HTML, JavaScript, CSS, or even WebAssembly, can be executed inside Browser Functions. The functions are actually executed within a browser on the server (e.g. Chrome or Firefox). This means that front-end code can be used directly in the backend.
 
 # Why would you use it?
 
 Browser Functions can be used as a serverless platform. If you are hosting your own serverless solution, Browser Functions may provide a platform that is cheaper to host compared to standard serverless platforms. It is quick and easy to get [up and running](?install.md), and is very lightweight compared to other solutions, leading to much [better performance](?performance.md) (or conversely, much lower resource utilization). Unlike other serverless platforms, there isn't a cold-start penalty, so there isn't a need to keep resource-hungry containers running.
 
-As a developer, you may consider using Browser Functions if you are familiar with web front-end development. You can use the same web API's and code you use on the front-end in Browser Functions to create your own RESTful API's - all that is required is a `main()` JavaScript function to return the results. Best of all, you can take advantage of the latest web API's, since Browser Functions uses very recent versions of Chrome and Firefox.
+As a developer, you may consider using Browser Functions as an execution environment to host your micro-services or REST API. You can write your RESTful API's using HTML and JavaScript - all that is required is a `main()` JavaScript function to return the results. Best of all, you can take advantage of the latest web API's, since Browser Functions uses very recent versions of Chrome and Firefox to execute your code.
 
 You may be wondering why you wouldn't just run those functions on the client browsers. Running the code on a hosted server is useful when you need to:
 
-- hide credentials (e.g. database login or API keys) from the client
-- run the function on a trigger (e.g. on a schedule, or via Webhooks)
-- expose private cloud data to public (i.e. the function runs inside a private network)
-- work around [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) restrictions (i.e. proxy clients through the server)
-- have the function be consumed by non-browsers (e.g. mobile apps, embedded devices)
-- pre-render content for old browsers, embedded devices, smart watches, etc. (e.g. render an SVG, return the image)
-- add a caching layer to a rate-limited external API (e.g. twitter)
+- protect sensitive credentials from the client, e.g. database login or API keys
+- run the function on a trigger, e.g. on a schedule, or via Webhooks
+- expose private cloud data to public, i.e. the function runs inside a private network
+- work around [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) restrictions, i.e. proxy clients through the server
+- have the function be consumed by non-browsers, e.g. mobile apps, embedded devices
+- pre-render content for old browsers/embedded devices/smart watches, e.g. render an SVG, return the image
+- perform resource intensive computations on the server, e.g. Tensorflow.js inference or GPU.js calculations
+- add a caching layer to a rate-limited external API, e.g. twitter
 
 See the *benefits* section below for more.
 
 # How does it work?
 
-Browser Functions uses "containers" to execute your code, where the containers are browser tabs. This makes them fast and lightweight. To co-ordinate the jobs and the browser instances, Browser Functions contains a *server* (written in NodeJS) which launches a *controller* into each browser. The controllers manage the worker tabs and communicates back to the server via a web socket.
+Browser Functions uses execution engines to execute your code, where the execution engines are actual web browsers. This makes the platform fast and lightweight. To co-ordinate the jobs and the execution engines, Browser Functions contains a *server* (written in NodeJS) which launches a *controller* into each execution engine. The controllers manage the worker tabs and communicate back to the server via a web socket.
 
 ![System architecture](images/system-architecture.png)
 
-Requests come into the server, which then forwards it onto an available browser controller. The controller launches the request into a free tab, calls the `main()` function, and returns the result back to the server, which then forwards it back to the client. In order to maintain isolation between different applications, each application is given a different domain name (which is a sub-domain of the server's domain), e.g. `app1.browserfunctions.test`.
+Requests come into the server, which then forwards it onto an available execution engine. The controller in the execution engine launches the request into a free tab, calls the `main()` function, and returns the result back to the server, which then forwards it back to the client. In order to maintain isolation between different applications, each application is given a different domain name, e.g. `app1.browserfunctions.test`.
 
 # What are the benefits?
 
-Using a browser on the server offers many benefits over current serverless platforms:
+Using a browser as the execution engine on the server offers many benefits over current container-based serverless platforms:
 
 ## Performance
 

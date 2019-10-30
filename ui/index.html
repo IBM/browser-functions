@@ -189,38 +189,39 @@
 
 <page-container>
     <div class="tiles">
-        <content-tile header="What is it?">
-            Browser Functions is a platform for running functions inside a browser, on a server. Any code
-            executable by a modern browser, such as HTML, JavaScript, CSS, or even Web Assembly, can be executed inside
-            Browser Functions.
+        <content-tile header="What is it?">x
+            Browser Functions is a platform for running functions written using the Web API, on a server. 
+            Any code executable by a modern browser, such as HTML, JavaScript, CSS, or even WebAssembly, can be 
+            executed inside Browser Functions. 
         </content-tile>
         <content-tile header="How does it work?">
-            Browser Functions uses "containers" to execute your code, where the containers are browser tabs. This makes
-            them fast and lightweight.
+            Browser Functions uses execution engines to execute your code, where the execution engines are actual web browsers.
+            This makes the platform fast and lightweight.
         </content-tile>
         <content-tile header="Architecture">
-            Browser Functions consists of a server and one or more browsers. Each browser runs a controller to
-            communicate between the server and the execution tabs.
+            To co-ordinate the jobs and the execution engines, Browser Functions contains a *server* which 
+            launches a *controller* into each execution engine. The controllers manage the worker tabs and 
+            communicate back to the server via a web socket.
         </content-tile>
         <content-tile header="Performance">
             Functions in Browser Functions run about 10 times faster (10 times more throughput, 10 times less latency, and 10
-            times the amount of concurrent requests), than an equivalent function executing on OpenWhisk, on the same
-            hardware.
+            times the amount of concurrent requests), than an equivalent function executing on a container-based serverless platform, 
+            on the same hardware.
         </content-tile>
         <content-tile header="Secure">
             Browser Functions leverages the same security that protects your banking tab from other malicious sites.
         </content-tile>
         <content-tile header="Instantly Scalable">
-            You can spin up execution environments (browsers) in seconds, and they can run anywhere. You can choose
-            between running Firefox, Chrome, Chromium, or even all of them together.
+            You can spin up execution engines (browsers) in seconds, and they can run anywhere. You can choose
+            between running Firefox, Chrome/Chromium, or even all of them together.
         </content-tile>
         <content-tile header="Hybrid Cloud Ready">
-            You can deploy Browser Functions inside your private cloud, or simply run the execution browser(s) within
+            You can deploy Browser Functions inside your private cloud, or simply run the execution engine(s) within
             your private cloud. You can choose to run sensitive functions within your private cloud, but public
             functions on the public cloud.
         </content-tile>
         <content-tile header="Open Source">
-            Coming soon: Browser Functions is open source, and you can deploy it to your own private cloud.
+            Browser Functions is open source, and you can deploy it to your own private cloud.
         </content-tile>
 
     </div>
