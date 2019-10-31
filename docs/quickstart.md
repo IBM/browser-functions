@@ -1,6 +1,6 @@
 # QuickStart
 
-Browser Functions consists of a server component (written in NodeJS), and one or more browser execution environments - Chrome, Chromium, or Firefox instances usually running headlessly, connected to the server.
+Browser Functions consists of a server component (written in NodeJS), and one or more browser execution engines - Chrome, Chromium, or Firefox instances usually running headlessly, connected to the server.
 
 ## Write and deploy to an existing server
 
@@ -27,7 +27,7 @@ You can test and develop your function by using a local browser and it's develop
 
 You can write a function and execute it without the need for the Browser Function server at all. Only a static local web server is needed. Steps to do this:
 
-- Download [this ZIP](https://github.com/IBM/browser-functions/browser_backend/archive/master.zip) file and unzip it to a local folder.
+- Download [this ZIP](https://github.com/IBM/browser-functions/archive/master.zip) file and unzip it to a local folder.
 - Start a local web server in the folder, e.g. run `python -m http.server`. 
 - Place your function into the `functions_root` folder (e.g. `hello.js`).
 

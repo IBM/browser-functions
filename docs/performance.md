@@ -6,15 +6,18 @@ Below are the benchmark results of running a function on Browser Functions, vs r
 
 ## Response time
 
-![Response time - lower is better](images/perf-local-response.png)
+![](images/perf-local-response.png)<br/>
+*Response time in milliseconds - lower is better*
 
 ## Concurrency
 
-![Concurrent requests response time - lower is better](images/perf-local-concurrency.png)
+![](images/perf-local-concurrency.png)<br/>
+*Concurrent requests response time - lower is better*
 
 ## Throughput
 
-![Throughput - higher is better](images/perf-local-requests.png)
+![](images/perf-local-requests.png)<br/>
+*Throughput - higher is better*
 
 # Web Assembly native code execution
 
