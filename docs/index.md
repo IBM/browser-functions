@@ -114,4 +114,4 @@ Since it is a browser environment, you can have HTML, and even make use of CDNs 
 </script>
 ```
 
-See the [Quickstart](?quickstart.md) section to get started, and then use the [API reference](?api.md) to create your functions.
+See the [Quickstart](quickstart.md) section to get started, and then use the [API reference](api.md) to create your functions.
