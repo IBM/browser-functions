@@ -2,7 +2,7 @@
 
 Due to the lightweight nature of browser tabs, using them as containers provides a significant performance boost over traditional serverless architectures, such as those that use Docker or similar containers. 
 
-Below are the benchmark results of running a function on Browser Functions, vs running on Apache OpenWhisk, on the same hardware (MacBook Pro 2015). The blue line (braas) represents the performance of Browser Functions, vs the orange line for Apache OpenWhisk.
+Below are the benchmark results of running a function on Browser Functions, vs running on Apache OpenWhisk, on the same hardware (MacBook Pro 2015). This is a baseline comparative test, running a trivial JavaScript function on the two platforms. Other tests with different workload or test profiles may reveal different performance results. Apache OpenWhisk was installed using [this method](https://github.com/apache/openwhisk#quick-start), a production installation may perform differently. The blue line (braas) represents the performance of Browser Functions, vs the orange line for Apache OpenWhisk.
 
 ## Response time
 
