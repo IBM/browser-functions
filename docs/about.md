@@ -20,7 +20,7 @@ If you want to build a modern web app, you typically need to use a few different
 Our first challenge was: how do we get many browsers to talk to one or more browsers on the server? [The solution](https://github.com/IBM/browser-functions/blob/master/docs/index.md#how-does-it-work) we came up with is simple: run a regular web server, and have it forward the requests to the *server browser* (which we will call the *Execution Engine*), which then processes the requests in tabs (i.e. loads the web page and runs a `main()` JavaScript function), and returns the results back. We created a *controller tab* that runs on the execution engine, which talks to the web server using a WebSocket, and then opens and closes (or re-uses) tabs on-demand. This simple setup was all that was needed to get the system functional.
 
 <p class="center">
-    <video src="videos/cast_custom_controller.mp4" loop controls></video>
+    <iframe width="500" height="281" src="https://www.youtube.com/embed/M6W0YTaAlX8" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
     <i>A desktop browser executing many functions in multiple tabs</i>
 </p>
 
@@ -66,7 +66,7 @@ We can add more execution engines to a single web server instance simply by open
 These execution engines could be running anywhere, including inside our private network, thus enabling a hybrid-cloud approach. We could even run them on desktops/laptops/Raspberry Pi's.
 
 <p class="center">
-    <video src="videos/cast_admin.mp4" loop controls></video>
+    <iframe width="500" height="281" src="https://www.youtube.com/embed/3CCXa4M8ogA" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
     <i>Managing running browser instances on the server</i>
 </p>
 
@@ -94,7 +94,7 @@ home$
 Browser Functions also provides function arguments, environment variables, ability to set return headers, and more, via a simple [API](https://github.com/IBM/browser-functions/blob/master/docs/api.md).
 
 <p class="center">
-    <video src="videos/cast_create_function.mp4" loop controls></video>
+    <iframe width="500" height="281" src="https://www.youtube.com/embed/jDPkpXFIp2I" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
     <i>Uploading and running a function</i>
 </p>
 
