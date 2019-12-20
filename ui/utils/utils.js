@@ -129,7 +129,7 @@ export const fetchMarkdownAsHtml = async (fileName) => {
         },
     })
     let html = marked(fileContent)
-    //html = html.replace(/href=\"(.*).md/g,'href=\"?$1.md') // ensure all links change the hash instead of navigating away
+    html = html.replace(/href=\"(.*?).md/g,'href=\"?$1.md') 
 
     if (fileContent.includes(tocLiteral)) {
         const remainingMarkdown = fileContent.substring(fileContent.indexOf(tocLiteral))

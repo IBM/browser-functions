@@ -4,7 +4,7 @@
 
 ## Local development without installation
 
-You can write a function and execute it without the need for the Browser Functions server at all. Only a static local web server is needed. See [Quickstart](?quickstart.md) for details on how to do this.
+You can write a function and execute it without the need for the Browser Functions server at all. Only a static local web server is needed. See [Quickstart](quickstart.md) for details on how to do this.
 
 ## Installation
 

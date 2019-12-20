@@ -9,7 +9,7 @@ Browser Functions is a platform for running functions written using the Web API,
 
 # Why would you use it?
 
-Browser Functions can be used as a serverless platform. If you are hosting your own serverless solution, Browser Functions may provide a platform that is cheaper to host compared to standard serverless platforms. It is quick and easy to get [up and running](?install.md), and is very lightweight compared to other solutions, leading to much [better performance](?performance.md) (or conversely, much lower resource utilization). Unlike other serverless platforms, there isn't a cold-start penalty, so there isn't a need to keep resource-hungry containers running.
+Browser Functions can be used as a serverless platform. If you are hosting your own serverless solution, Browser Functions may provide a platform that is cheaper to host compared to standard serverless platforms. It is quick and easy to get [up and running](install.md), and is very lightweight compared to other solutions, leading to much [better performance](performance.md) (or conversely, much lower resource utilization). Unlike other serverless platforms, there isn't a cold-start penalty, so there isn't a need to keep resource-hungry containers running.
 
 As a developer, you may consider using Browser Functions as an execution environment to host your micro-services or REST API. You can write your RESTful API's using HTML and JavaScript - all that is required is a `main()` JavaScript function to return the results. Best of all, you can take advantage of the latest web API's, since Browser Functions uses very recent versions of Chrome and Firefox to execute your code.
 
@@ -40,7 +40,7 @@ Using a browser as the execution engine on the server offers many benefits over 
 
 ## Performance
 
-A browser tab opens in about 20 milliseconds and uses much less memory than a typical docker container. Browser Functions takes this further and keeps *worker tabs* open and ready to accept jobs. This means that there isn't a *cold start* penalty, and once the browser has cached the resources of the function, subsequent executions are even faster. You can see some performance benchmarks and read more about performance of Browser Functions in the [performance](?performance.md) section.
+A browser tab opens in about 20 milliseconds and uses much less memory than a typical docker container. Browser Functions takes this further and keeps *worker tabs* open and ready to accept jobs. This means that there isn't a *cold start* penalty, and once the browser has cached the resources of the function, subsequent executions are even faster. You can see some performance benchmarks and read more about performance of Browser Functions in the [performance](performance.md) section.
 
 ## Security
 
@@ -64,7 +64,7 @@ Modern browsers feature hardware-accelerated capability, such as WebGL (which ta
 
 ## Local development
 
-The same tools you use to build web sites, can now be used to create, debug and execute backend functions. With just a web browser and a local web server, you can [execute your functions locally](?quickstart.md) and use the browser developer tools to debug and validate your code, before uploading it to a server.
+The same tools you use to build web sites, can now be used to create, debug and execute backend functions. With just a web browser and a local web server, you can [execute your functions locally](quickstart.md) and use the browser developer tools to debug and validate your code, before uploading it to a server.
 
 # What's the catch?
 
@@ -114,4 +114,4 @@ Since it is a browser environment, you can have HTML, and even make use of CDNs 
 </script>
 ```
 
-See the [Quickstart](?quickstart.md) section to get started, and then use the [API reference](?api.md) to create your functions.
+See the [Quickstart](quickstart.md) section to get started, and then use the [API reference](api.md) to create your functions.

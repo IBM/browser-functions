@@ -35,9 +35,10 @@ template.innerHTML = `
     </style>
     
 <footer class="bx--website-footer">
-    <a href="mailto:toby.kurien@za.ibm.com?subject=Browser%20Functions%20Feedback" target="_blank">Email us</a> |
-    <a href="https://www.ibm.com/privacy/za/en/?lnk=flg-priv-zaen" target="_blank">Privacy Policy</a> | 
-    <a href="https://www.ibm.com/legal/za/en/?lnk=flg-tous-zaen" target="_blank">Terms of Use</a>
+    <a href="https://github.com/IBM/browser-functions/issues" target="_blank">Feedback</a> |
+    <a href="https://github.com/IBM/browser-functions" target="_blank">Source Code</a> |
+    <a href="/docs">Docs</a> |
+    <a href="/docs/?about.md">About</a>
 </footer>
 `
 
