@@ -1,7 +1,8 @@
 FROM zenika/alpine-chrome:with-puppeteer
 
 ENV PUPPETEER_EXECUTABLE_PATH /usr/bin/chromium-browser
-ENV IN_DOCKER   1
+ENV IN_DOCKER   true
+ENV NODE_ENV    production
 
 EXPOSE 3000
 EXPOSE 9229

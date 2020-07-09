@@ -106,7 +106,7 @@ function setupAdmin(app) {
   async function addNewChrome() {
     const args = chrome.defaultArgs();
     args.push("--site-per-process");
-    args.push("--no-sandbox"); // so it works in the docker image
+    if (config.inDocker) args.push("--no-sandbox"); // so it works in the docker image
     return addNewBrowser(chrome, config.chromeTabCount, args);
   }
 
