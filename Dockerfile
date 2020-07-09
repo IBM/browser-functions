@@ -11,6 +11,8 @@ USER root
 # copy in our app
 RUN mkdir /app
 COPY --chown=chrome . /app
+WORKDIR /app
+RUN npm install
 
 USER chrome
 ENTRYPOINT ["tini", "--"]
