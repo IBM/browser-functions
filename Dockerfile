@@ -1,7 +1,12 @@
 FROM zenika/alpine-chrome:with-puppeteer
 
-EXPOSE 3000
+ENV PUPPETEER_EXECUTABLE_PATH /usr/bin/chromium-browser
+ENV IN_DOCKER   1
 
+EXPOSE 3000
+EXPOSE 9229
+
+USER root
 # copy in our app
 RUN mkdir /app
 COPY . /app
