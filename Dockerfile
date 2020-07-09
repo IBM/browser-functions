@@ -9,7 +9,7 @@ EXPOSE 9229
 USER root
 # copy in our app
 RUN mkdir /app
-COPY . /app
+COPY --chown=chrome . /app
 
 USER chrome
 ENTRYPOINT ["tini", "--"]
