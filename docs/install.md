@@ -54,7 +54,7 @@ To run it in production, specify some mandatory environment variables:
 
 `docker run -p 80:3000 -e MASTER_ACCESS_KEY=[admin access password] -e HOST=[server domain] [image_id]`
 
-See below for details on the HOST and MASTER_ACCESS_KEY environment variables. You should also map a volume for the `functions_root` directory, otherwise any changes will be lost when the image is re-started.
+See below for details on the HOST and MASTER_ACCESS_KEY environment variables.
 
 ## Deployment and Provisioning
 
