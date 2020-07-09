@@ -10,6 +10,7 @@ EXPOSE 9229
 USER root
 # copy in our app
 RUN mkdir /app
+RUN chown -R chrome:chrome /app
 COPY --chown=chrome . /app
 
 USER chrome
@@ -19,4 +20,4 @@ ENTRYPOINT ["tini", "--"]
 
 # Run your program under Tini
 WORKDIR /app
-CMD ["npm", "run", "start"]
+CMD ["npm", "run", "start:prod"]
