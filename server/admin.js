@@ -14,197 +14,207 @@
  * limitations under the License.
  */
 
-const chrome = require('puppeteer');
-const firefox = require('puppeteer-firefox');
-const config = require('./config')
-const uuid = require('./uuid')
-const utils = require('./utils')
-const security = require('./security')
+const chrome = require("puppeteer");
+const firefox = require("puppeteer-firefox");
+const config = require("./config");
+const uuid = require("./uuid");
+const utils = require("./utils");
+const security = require("./security");
 const controllers = require("./websockets/controllers");
-const express = require('express')
-const router = express.Router()
-const {spawn} = require('child_process');
-const logger = require('./logger')
+const express = require("express");
+const router = express.Router();
+const { spawn } = require("child_process");
+const logger = require("./logger");
 
-const serveOptions = {root: __dirname + '/../ui/'}
+const serveOptions = { root: __dirname + "/../ui/" };
 
 function setupAdmin(app) {
+  const browserInstances = {};
 
-    const browserInstances = {}
+  utils.onProcessExit(() => {
+    for (let browserId of Object.keys(browserInstances)) {
+      const browser = browserInstances[browserId];
+      browser.close();
+    }
+  });
 
-    utils.onProcessExit(() => {
-        for (let browserId of Object.keys(browserInstances)) {
-            const browser = browserInstances[browserId]
-            browser.close()
-        }
-    })
+  router.use(security.authenticateAdmin);
 
-    router.use(security.authenticateAdmin)
+  app.use("/admin", router);
 
-    app.use('/admin', router)
+  router.get("/stats", async function (req, res) {
+    const controllerData = controllers.allControllers().map((controller) => ({
+      browser: controller.browser,
+      version: controller.browserVersion,
+      address: controller.request.connection.remoteAddress, // might need to use socket.handshake.address
+      connectedAt: controller.connectedAt.toLocaleString(),
+      id: controller.id,
+    }));
 
-    router.get('/stats', async function (req, res) {
+    const browserData = Object.keys(browserInstances).map((browserId) => {
+      const browser = browserInstances[browserId];
 
-        const controllerData = controllers.allControllers().map(controller => ({
-            browser: controller.browser,
-            version: controller.browserVersion,
-            address: controller.request.connection.remoteAddress, // might need to use socket.handshake.address
-            connectedAt: controller.connectedAt.toLocaleString(),
-            id: controller.id
-        }));
+      return {
+        id: browserId,
+        version: browser.version,
+        createdAt: browser.createdAt.toLocaleString(),
+      };
+    });
 
-        const browserData = Object.keys(browserInstances).map(browserId => {
-            const browser = browserInstances[browserId]
+    res.send({
+      browsers: browserData,
+      controllers: controllerData,
+    });
+  });
 
-            return {
-                id: browserId,
-                version: browser.version,
-                createdAt: browser.createdAt.toLocaleString()
-            }
-        })
+  router.get("/", async function (req, res) {
+    res.sendFile("admin.html", serveOptions);
+  });
 
-        res.send({
-            browsers: browserData,
-            controllers: controllerData
-        })
-    })
+  router.post("/browser/chrome", async function (req, res) {
+    await addNewChrome();
+    res.sendStatus(200);
+  });
 
-    router.get('/', async function (req, res) {
-        res.sendFile('admin.html', serveOptions)
-    })
+  router.post("/browser/firefox", async function (req, res) {
+    await addNewFirefox();
+    res.sendStatus(200);
+  });
 
-    router.post('/browser/chrome', async function (req, res) {
-        await addNewChrome()
-        res.sendStatus(200)
-    })
+  router.delete("/browser/:id", async function (req, res) {
+    const id = req.params.id;
+    await closeBrowser(id);
+    res.sendStatus(200);
+  });
 
-    router.post('/browser/firefox', async function (req, res) {
-        await addNewFirefox()
-        res.sendStatus(200)
-    })
+  router.delete("/controller/:id", async function (req, res) {
+    const id = req.params.id;
+    await closeController(id);
+    res.sendStatus(200);
+  });
 
-    router.delete('/browser/:id', async function (req, res) {
-        const id = req.params.id
-        await closeBrowser(id)
-        res.sendStatus(200)
-    })
+  async function closeBrowser(id) {
+    await browserInstances[id].close();
+    delete browserInstances[id];
+  }
 
-    router.delete('/controller/:id', async function (req, res) {
-        const id = req.params.id
-        await closeController(id)
-        res.sendStatus(200)
-    })
+  async function closeController(id) {
+    const socket = controllerSockets.find((socket) => socket.id === id);
+    socket.emit("SHUT_DOWN");
+  }
 
-    async function closeBrowser(id) {
-        await browserInstances[id].close()
-        delete browserInstances[id]
+  async function addNewChrome() {
+    const args = chrome.defaultArgs();
+    args.push("--site-per-process");
+    if (config.inDocker) args.push("--no-sandbox"); // so it works in the docker image
+    return addNewBrowser(chrome, config.chromeTabCount, args);
+  }
+
+  async function addNewFirefox() {
+    const args = firefox.defaultArgs();
+    return addNewBrowser(firefox, config.firefoxTabCount, args);
+  }
+
+  async function addNewBrowser(engine, tabCount, args) {
+    if (!args) {
+      args = engine.defaultArgs();
     }
 
-    async function closeController(id) {
-        const socket = controllerSockets.find(socket => socket.id === id)
-        socket.emit('SHUT_DOWN')
+    try {
+      const browser = await engine.launch({ args });
+      browser.createdAt = new Date();
+      browser.version = await browser.version();
+      const browserId = uuid.v4();
+      browserInstances[browserId] = browser;
+
+      if (logger.isLevelEnabled("debug")) {
+        captureLogsFromBrowserTabs(browser);
+      }
+
+      const context = await browser.createIncognitoBrowserContext();
+      const page = await context.newPage();
+      page.setDefaultNavigationTimeout(5 * 60 * 1000);
+
+      const tabs = config.isDev ? 2 : tabCount;
+      // Use localhost for admin controller to ensure no domain clashes with functions
+      // Long running functions on same domain/subdomain as controller will lock up the controller
+      // TODO: confirm there are no security issues introduced by using localhost for the controller.
+      await page.goto(
+        `http://localhost:${config.port}/controller?tabs=${tabs}&access-key=${config.masterAccessKey}`
+      );
+    } catch (ex) {
+      logger.error("Unable to add new browser", ex);
     }
+  }
 
-    async function addNewChrome() {
-        const args = chrome.defaultArgs()
-        args.push('--site-per-process')
-        return addNewBrowser(chrome, config.chromeTabCount, args)
-    }
-
-    async function addNewFirefox() {
-        const args = firefox.defaultArgs()
-        return addNewBrowser(firefox, config.firefoxTabCount, args)
-    }
-
-    async function addNewBrowser(engine, tabCount, args) {
-        if (!args) {
-            args = engine.defaultArgs()
-        }
-
-        try {
-            const browser = await engine.launch({args});
-            browser.createdAt = new Date()
-            browser.version = await browser.version()
-            const browserId = uuid.v4()
-            browserInstances[browserId] = browser
-
-            if (logger.isLevelEnabled('debug')) {
-                captureLogsFromBrowserTabs(browser)
-            }
-
-            const context = await browser.createIncognitoBrowserContext();
-            const page = await context.newPage();
-            page.setDefaultNavigationTimeout(5 * 60 * 1000)
-
-            const tabs = config.isDev ? 2 : tabCount
-            // Use localhost for admin controller to ensure no domain clashes with functions
-            // Long running functions on same domain/subdomain as controller will lock up the controller
-            // TODO: confirm there are no security issues introduced by using localhost for the controller.
-            await page.goto(`http://localhost:${config.port}/controller?tabs=${tabs}&access-key=${config.masterAccessKey}`);
-        } catch (ex) {
-            logger.error('Unable to add new browser', ex)
-        }
-    }
-
-    if (!config.isDev) {
-        killExistingBrowserInstances().then(() => {
-            addNewChrome()
-            addNewFirefox()
-        })
-    } else {
-        addNewChrome()
-    }
+  if (!config.isDev) {
+    killExistingBrowserInstances().then(() => {
+      addNewChrome();
+      addNewFirefox();
+    });
+  } else {
+    addNewChrome();
+  }
 }
 
 function captureLogsFromBrowserTabs(browser) {
-    browser.on('targetcreated', async (target) => {
-        logger.debug('New ' + target.type() + '\n\turl: ' + target.url() + '\n\tTabs: ' + (await browser.pages()).length)
+  browser.on("targetcreated", async (target) => {
+    logger.debug(
+      "New " +
+        target.type() +
+        "\n\turl: " +
+        target.url() +
+        "\n\tTabs: " +
+        (await browser.pages()).length
+    );
 
-        const page = await target.page()
-        if (!page) {
-            return
-        }
-        page.on('console', msg => {
-            logger.debug('Console ' + msg.type() + ' message:')
-            logger.debug('\tmessage: ' + msg.text())
-            logger.debug('\tlocation: ' + msg.location().url + ':' + msg.location().lineNumber)
-        })
-        page.on('error', msg => {
-            logger.debug(page.url() + ' - error: ' + JSON.stringify(msg))
-        })
-        page.on("pageerror", function (err) {
-            logger.debug(err.toString())
-        })
-    })
+    const page = await target.page();
+    if (!page) {
+      return;
+    }
+    page.on("console", (msg) => {
+      logger.debug("Console " + msg.type() + " message:");
+      logger.debug("\tmessage: " + msg.text());
+      logger.debug(
+        "\tlocation: " + msg.location().url + ":" + msg.location().lineNumber
+      );
+    });
+    page.on("error", (msg) => {
+      logger.debug(page.url() + " - error: " + JSON.stringify(msg));
+    });
+    page.on("pageerror", function (err) {
+      logger.debug(err.toString());
+    });
+  });
 }
 
 async function killExistingBrowserInstances() {
-    await killProcess('firefox')
-    await killProcess('chrome')
+  await killProcess("firefox");
+  await killProcess("chrome");
 }
 
 function killProcess(processName) {
-    const killall = spawn('killall', ['-9', processName]);
+  const killall = spawn("killall", ["-9", processName]);
 
-    return new Promise((resolve, reject) => {
-        killall.stdout.on('data', (data) => {
-            logger.debug(`stdout: ${data}`);
-        });
+  return new Promise((resolve, reject) => {
+    killall.stdout.on("data", (data) => {
+      logger.debug(`stdout: ${data}`);
+    });
 
-        killall.stderr.on('data', (data) => {
-            logger.debug(`stderr: ${data}`);
-        });
+    killall.stderr.on("data", (data) => {
+      logger.debug(`stderr: ${data}`);
+    });
 
-        killall.on('close', (code) => {
-            logger.info(`killall process exited with code ${code}`);
-            resolve()
-        });
-    })
+    killall.on("close", (code) => {
+      logger.info(`killall process exited with code ${code}`);
+      resolve();
+    });
+  });
 }
 
 module.exports = {
-    setupAdmin
-}
+  setupAdmin,
+};
 
 /* firefox default args
 [ '-no-remote', '-foreground', '-headless', 'about:blank' ]

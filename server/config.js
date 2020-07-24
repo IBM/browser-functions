@@ -15,25 +15,33 @@
  */
 
 const config = {
-    port: process.env.PORT || 3000,
-    host: process.env.HOST || 'browserfunctions.test',
-    functionDomain: process.env.DOMAIN || process.env.HOST || 'browserfunctions.test',
-    functionsRoot: process.env.FUNCTIONS_ROOT || __dirname + '/../functions_root/',
-    masterAccessKey: process.env.MASTER_ACCESS_KEY || 'MASTER_ACCESS_KEY',
-    level: process.env.LOG_LEVEL || 'debug',
-    protocol: process.env.NODE_ENV === 'production' ? 'https' : 'http',
-    isDev: process.env.NODE_ENV !== 'production',
-    portInfo: process.env.NODE_ENV === 'production' ? '' : `:${process.env.PORT || 3000}`,
-    chromeTabCount: 100,
-    firefoxTabCount: 20
-}
+  port: process.env.PORT || 3000,
+  host: process.env.HOST || "browserfunctions.test",
+  functionDomain:
+    process.env.DOMAIN || process.env.HOST || "browserfunctions.test",
+  functionsRoot:
+    process.env.FUNCTIONS_ROOT || __dirname + "/../functions_root/",
+  masterAccessKey: process.env.MASTER_ACCESS_KEY || "MASTER_ACCESS_KEY",
+  level: process.env.LOG_LEVEL || "debug",
+  protocol: process.env.NODE_ENV === "production" ? "https" : "http",
+  isDev: process.env.NODE_ENV !== "production",
+  inDocker: process.env.IN_DOCKER,
+  portInfo:
+    process.env.NODE_ENV === "production" ? "" : `:${process.env.PORT || 3000}`,
+  chromeTabCount: 100,
+  firefoxTabCount: 20,
+};
 
 if (!config.isDev && !process.env.MASTER_ACCESS_KEY) {
-    throw new Error('You must set an environment variable named MASTER_ACCESS_KEY in production mode.')
+  throw new Error(
+    "You must set an environment variable named MASTER_ACCESS_KEY in production mode."
+  );
 }
 
 if (!config.isDev && !process.env.HOST) {
-    throw new Error('You must set an environment variable named HOST in production mode.')
+  throw new Error(
+    "You must set an environment variable named HOST in production mode."
+  );
 }
 
-module.exports = config
+module.exports = config;

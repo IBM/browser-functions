@@ -15,10 +15,11 @@ If you want to run a Browser Functions server locally (or on your own server), i
 - Browser Functions uses sub-domains to separate applications from each other, so for local development, you will need to add the domain names into your `/etc/hosts` file pointing to localhost (see below for using dnsmasq instead). Start with the following:
 
 ```
-127.0.0.1 browserfunctions.test 
+127.0.0.1 browserfunctions.test
 127.0.0.1 examples.browserfunctions.test
 127.0.0.1 myapp.browserfunctions.test
 ```
+
 - Set the admin access key in the `MASTER_ACCESS_KEY` OS environment variable, example: `export MASTER_ACCESS_KEY=mysupersecretadminpassword`
 - To start the server, run `npm start`. By default, the server will automatically spin up a Chrome instance for local development.
 
@@ -32,10 +33,28 @@ You can access the admin page to control the browser instances: `https://yourser
 
 Instead of adding each application manually to your local `/etc/hosts` file, you can instead run a local DNS server to handle this.
 
-Set up dnsmasq to point all *.test urls to 127.0.0.1 using this method:
+Set up dnsmasq to point all \*.test urls to 127.0.0.1 using this method:
 https://medium.com/@kharysharpe/automatic-local-domains-setting-up-dnsmasq-for-macos-high-sierra-using-homebrew-caf767157e43
 
 This should not be needed on production machines that have a publicly available domain name, provided the domain supports wildcard subdomains.
+
+## Running with Docker
+
+To run Browser Functions with [Docker](https://docker.com), install Docker and then build an image with:
+
+`docker build .`
+
+This will build an image (downloads about 320Mb) and output the image identifier.
+
+You can then run a local development instance and access it at `http://localhost:3000`:
+
+`docker run -p 3000:3000 -e NODE_ENV=development [image_id]`
+
+To run it in production, specify some mandatory environment variables:
+
+`docker run -p 80:3000 -e MASTER_ACCESS_KEY=[admin access password] -e HOST=[server domain] [image_id]`
+
+See below for details on the HOST and MASTER_ACCESS_KEY environment variables.
 
 ## Deployment and Provisioning
 
@@ -48,23 +67,29 @@ The app can be run without forever or with another tool such as systemd, however
 variable is set to `production`.
 
 ### Host
-When running in production there must be an environment variable called `HOST` which should be the domain name that has been registered 
+
+When running in production there must be an environment variable called `HOST` which should be the domain name that has been registered
 for your server eg. browserfunctions.test
 
 ### Master access key
+
 When running in production there must be an environment variable called `MASTER_ACCESS_KEY`. This is used for accessing the admin console
 and for master controllers to connect to the server. In development this defaults to the string `MASTER_ACCESS_KEY`
 
 ### Logging
+
 By default the app will log to `/var/log/browser_functions/app.log`. Ensure the user running the process has write permissions
 or alternatively edit this location in the package.json.
 
 ### Functions root
+
 Controlled by the `FUNCTIONS_ROOT` environment variable. This defaults to the functions_root folder inside this repo.
-This is the location that applications and functions will be read and written to. The user running the process must have write access to this directory. 
+This is the location that applications and functions will be read and written to. The user running the process must have write access to this directory.
 
 ### Ubuntu Server
+
 The following packages are required if deploying to Ubuntu server. They needed to run chromium/firefox in headless mode:
+
 - gconf-service
 - libasound2
 - libatk1.0-0
