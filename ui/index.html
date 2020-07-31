@@ -146,7 +146,7 @@
 <div class="hero-image">
     <div class="overlay">
         <h1>Browser Functions</h1>
-        <h2>Hosted <span style="color:#61d4d1">functions</span> running inside a web <span style="color:#61d4d1">browser</span></h2>
+        <h2>Execute your <span style="color:#61d4d1">HTML5 / JavaScript functions</span> on a <span style="color:#61d4d1">server</span></h2>
         <div class="actions">
             <a href="/new">Get Started</a>
             <a href="/docs">Documentation</a>
@@ -157,13 +157,23 @@
 
 <div id="code">
     <div style="color: white; width: 100%; font-size: 2rem; margin-top: 2em; margin-bottom: 2em;">
-        Code your backend functions using HTML5
+        Code your backend functions using HTML5 or JavaScript
     </div>
 
     <div style="display: flex; flex-direction: column; flex-grow: 1">
-        <div class="heading">Function code:</div>
+        <div class="heading">
+            Function code: 
+        </div>
 
-<!-- HTML generated using hilite.me --><div class="code" style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #062873; font-weight: bold">&lt;div</span> <span style="color: #4070a0">id=&quot;message&quot;</span><span style="color: #062873; font-weight: bold">&gt;</span>Hello, world!<span style="color: #062873; font-weight: bold">&lt;/div&gt;</span>
+        <div style="min-width: 400px;">
+            <button onclick="code('JS')">JavaScript</button>
+            <button onclick="code('HTML')">HTML</button> 
+            <div id="codeDisplayed"></div>
+        </div>
+
+        <div id="codeHTML" style="display:none">
+<!-- HTML generated using hilite.me -->
+<div class="code" style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #062873; font-weight: bold">&lt;div</span> <span style="color: #4070a0">id=&quot;message&quot;</span><span style="color: #062873; font-weight: bold">&gt;</span>Hello, world!<span style="color: #062873; font-weight: bold">&lt;/div&gt;</span>
 
 <span style="color: #062873; font-weight: bold">&lt;script&gt;</span>
 <span style="color: #007020; font-weight: bold">function</span> main() {
@@ -171,15 +181,32 @@
 }
 <span style="color: #062873; font-weight: bold">&lt;/script&gt;</span>
 </pre></div>
+        </div>
 
-    </div>
+        <div id="codeJS" style="display:none">
+<!-- HTML generated using hilite.me -->
+<div class="code" style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;">
+<pre><span style="color: #007020; font-weight: bold">function</span> main() {
+    <span style="color: #007020; font-weight: bold">return</span>(<span style="color: #4070a0">&#39;Hello, world!&#39;);
+}
+</pre></div>
+            </div>
+        </div>
+
+        <script>
+            function code(which) {
+                document.getElementById('codeDisplayed').innerHTML = document.getElementById('code' + which).innerHTML;
+                document.getElementById('codeType').innerHTML = which.toLowerCase();
+            }
+            code('JS');
+        </script>
 
     <div style="flex-grow: 1"></div>
 
     <div style="display: flex; flex-direction: column; flex-grow: 1">
         <div class="heading">Execute it:</div>
-
-<!-- HTML generated using hilite.me --><div class="code" style="background: #000000; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">home$</span><span style="color: #FFF"> curl https://examples.browserfunctions.com/execute/hello/function.html</span>
+        <div><button style="visibility: hidden;"></button></div>
+<!-- HTML generated using hilite.me --><div class="code" style="background: #000000; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">home$</span><span style="color: #FFF"> curl https://examples.browserfunctions.com/execute/hello/function.<span id="codeType">html</span></span>
 <span style="color: #FFF">Hello, world!</span>
 <span style="color: #888888">home$</span>
 </pre></div>
@@ -190,37 +217,37 @@
 <page-container>
     <div class="tiles">
         <content-tile header="What is it?">
-            Browser Functions is a platform for running functions inside a browser, on a server. Any code
-            executable by a modern browser, such as HTML, JavaScript, CSS, or even Web Assembly, can be executed inside
-            Browser Functions.
+            Browser Functions is a platform for running functions written using the Web API, on a server. 
+            Any code executable by a modern browser, such as HTML, JavaScript, CSS, or even WebAssembly, can be 
+            executed inside Browser Functions. 
         </content-tile>
         <content-tile header="How does it work?">
-            Browser Functions uses "containers" to execute your code, where the containers are browser tabs. This makes
-            them fast and lightweight.
+            Browser Functions uses execution engines to execute your code, where the execution engines are actual web browsers.
+            This makes the platform fast and lightweight.
         </content-tile>
         <content-tile header="Architecture">
-            Browser Functions consists of a server and one or more browsers. Each browser runs a controller to
-            communicate between the server and the execution tabs.
+            To co-ordinate the jobs and the execution engines, Browser Functions contains a *server* which 
+            launches a *controller* into each execution engine. The controllers manage the worker tabs and 
+            communicate back to the server via a web socket.
         </content-tile>
         <content-tile header="Performance">
-            Functions in Browser Functions run about 10 times faster (10 times more throughput, 10 times less latency, and 10
-            times the amount of concurrent requests), than an equivalent function executing on OpenWhisk, on the same
-            hardware.
+            Functions in Browser Functions run about 10 times faster than an equivalent function executing on a container-based serverless platform, 
+            on the same hardware.
         </content-tile>
         <content-tile header="Secure">
             Browser Functions leverages the same security that protects your banking tab from other malicious sites.
         </content-tile>
         <content-tile header="Instantly Scalable">
-            You can spin up execution environments (browsers) in seconds, and they can run anywhere. You can choose
-            between running Firefox, Chrome, Chromium, or even all of them together.
+            You can spin up execution engines (browsers) in seconds, and they can run anywhere. You can choose
+            between running Firefox, Chrome/Chromium, or even all of them together.
         </content-tile>
         <content-tile header="Hybrid Cloud Ready">
-            You can deploy Browser Functions inside your private cloud, or simply run the execution browser(s) within
+            You can deploy Browser Functions inside your private cloud, or simply run the execution engine(s) within
             your private cloud. You can choose to run sensitive functions within your private cloud, but public
             functions on the public cloud.
         </content-tile>
         <content-tile header="Open Source">
-            Coming soon: Browser Functions is open source, and you can deploy it to your own private cloud.
+            Browser Functions is open source, and you can deploy it to your own private cloud.
         </content-tile>
 
     </div>
