@@ -99,7 +99,10 @@ app.get('/templates/:fileName.js', (req, res, next) => {
 // Serve resources required by template files
 app.get('/templates/resources/:fileName', (req, res, next) => {
     let filePath = `${__dirname}/../templates/resources/${req.params.fileName}`
-    const functionData = fs.readFileSync(filePath)
+    const functionData = fs.readFileSync(filePath);
+    if (req.params.fileName.endsWith(".wasm")) {
+        res.type('application/wasm')
+    }
     res.send(functionData);
 })
 
