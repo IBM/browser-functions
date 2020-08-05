@@ -96,6 +96,13 @@ app.get('/templates/:fileName.js', (req, res, next) => {
     res.send(functionData);
 })
 
+// Serve resources required by template files
+app.get('/templates/resources/:fileName', (req, res, next) => {
+    let filePath = `${__dirname}/../templates/resources/${req.params.fileName}`
+    const functionData = fs.readFileSync(filePath)
+    res.send(functionData);
+})
+
 app.all('/static/*', (req, res, next) => {
     if (req.method !== 'GET' && req.method !== 'POST') {
         next()

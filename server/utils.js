@@ -40,12 +40,16 @@ function runtimeFromName(name) {
     if (name.endsWith('.html')) {
         return 'HtmlMixed'
     }
+    if (name.endsWith('.py')) {
+        return 'Python'
+    }
     return ''
 }
 
 const fileExtensions = {
     javascript: 'js',
     htmlmixed: 'html',
+    python: 'py'
 }
 
 function getPortFromRequest(req) {
@@ -106,7 +110,7 @@ function getApplicationIdAsSubDomain(req) {
     // anything before the functionDomain is considered the application name
     let subDomains = req.hostname.replace(config.functionDomain, '')
     subDomains = subDomains.replace('.', '')
-    
+
     if (subDomains === 'www') return null;
 
     return subDomains

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="/templates/app.js"></script>
+    <script type="text/javascript">
+      window.languagePluginUrl = '/templates/resources/';
+    </script>
+    <script src="/templates/resources/pyodide.js"></script>
+</head>
+<body>
+
+<script>
+
+  async function main(args = {}) {
+    await languagePluginLoader
+
+    let code = `{{EMBEDDED_CODE}}`;
+
+    code += `\n\nmain(${JSON.stringify(args)})`
+
+    return await pyodide.runPythonAsync(code)
+
+  }
+</script>
+
+</body>
+</html>
