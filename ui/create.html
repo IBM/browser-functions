@@ -17,6 +17,8 @@
             src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.42.2/mode/css/css.min.js"></script>
     <script type="text/javascript"
             src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.42.2/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.42.2/mode/python/python.min.js"></script>
     <link rel="stylesheet" type="text/css"
           href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.42.2/codemirror.min.css"/>
 
@@ -68,21 +70,22 @@
     <!--INJECT_SERVER_VARS-->
 
     <script type="module">
-        import '/components/page-header.js'
-        import '/components/page-container.js'
-        import '/components/bx-button.js'
-        import '/components/bx-notification.js'
-        import '/components/page-footer.js'
-        import {$} from '/utils/utils.js'
+      import '/components/page-header.js'
+      import '/components/page-container.js'
+      import '/components/bx-button.js'
+      import '/components/bx-notification.js'
+      import '/components/page-footer.js'
+      import {$} from '/utils/utils.js'
 
-        const languageExtensions = {
-            js: { mode: 'javascript', label: 'JavaScript'},
-            json: { mode: 'javascript', label: 'JSON'},
-            html: { mode: 'htmlmixed', label: 'HTML'},
-        }
+      const languageExtensions = {
+        js: { mode: 'javascript', label: 'JavaScript'},
+        json: { mode: 'javascript', label: 'JSON'},
+        html: { mode: 'htmlmixed', label: 'HTML'},
+        py: { mode: 'python', label: 'Python'},
+      }
 
-        const initialValues = {
-            javascript: `
+      const initialValues = {
+        javascript: `
 /*
  * You must expose a function named main
  */
@@ -93,7 +96,7 @@ function main(args) {
     return 'Hello World!'
 
 }`,
-            htmlmixed: `
+        htmlmixed: `
 <script>
     /*
      * You must expose a function named main
@@ -106,108 +109,112 @@ function main(args) {
 
     }
 <\/script>
+`,
+        python: `
+def main(args):
+    return "Hello world"
 `
-        }
-        let codeEditor
+      }
+      let codeEditor
 
-        window.addEventListener('load', function () {
-            codeEditor = CodeMirror.fromTextArea($("#code"), {
-                lineNumbers: true,
-            });
+      window.addEventListener('load', function () {
+        codeEditor = CodeMirror.fromTextArea($("#code"), {
+          lineNumbers: true,
+        });
 
-            $('#cancel-button').addEventListener('click', () => {
-                window.location.href = '/' + window.location.search
-            })
-
-            $('#create-button').addEventListener('click', () => {
-                codeEditor.save() // ensure the text area has the correct data in it
-                submitForm()
-            })
-
-            $('#txtFncName').addEventListener('input', (e) => {
-                tryToDetermineLanguageFromFileName(e.target.value)
-            })
-
-            setInitialValues()
-            if ($("#txtFncName").value) {
-                tryToDetermineLanguageFromFileName($("#txtFncName").value)
-            }
+        $('#cancel-button').addEventListener('click', () => {
+          window.location.href = '/' + window.location.search
         })
 
-        function unescapeHtml(text) {
-            return text
-                .replace(/&amp;/g, '&' )
-                .replace(/&lt;/g, '<')
-                .replace(/&gt;/g, '>')
-                .replace(/&quot;/g, '"')
-                .replace(/&#039;/g, "'");
+        $('#create-button').addEventListener('click', () => {
+          codeEditor.save() // ensure the text area has the correct data in it
+          submitForm()
+        })
+
+        $('#txtFncName').addEventListener('input', (e) => {
+          tryToDetermineLanguageFromFileName(e.target.value)
+        })
+
+        setInitialValues()
+        if ($("#txtFncName").value) {
+          tryToDetermineLanguageFromFileName($("#txtFncName").value)
+        }
+      })
+
+      function unescapeHtml(text) {
+        return text
+          .replace(/&amp;/g, '&' )
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&#039;/g, "'");
+      }
+
+      function setInitialValues() {
+        const serverVars = window.serverVars
+        if (!serverVars) {
+          return
+        }
+        if (serverVars.functionName) {
+          $("#txtFncName").value = serverVars.functionName
+          $("#txtFncName").setAttribute("readonly", "")
         }
 
-        function setInitialValues() {
-            const serverVars = window.serverVars
-            if (!serverVars) {
-                return
-            }
-            if (serverVars.functionName) {
-                $("#txtFncName").value = serverVars.functionName
-                $("#txtFncName").setAttribute("readonly", "")
-            }
-
-            if (serverVars.code) {
-                $("#code").value = serverVars.code
-                codeEditor.setOption("value", unescapeHtml(serverVars.code))
-            }
+        if (serverVars.code) {
+          $("#code").value = serverVars.code
+          codeEditor.setOption("value", unescapeHtml(serverVars.code))
         }
+      }
 
-        function submitForm() {
-            const formData = new FormData($('#code-form'))
-            const fileName = formData.get('functionName')
+      function submitForm() {
+        const formData = new FormData($('#code-form'))
+        const fileName = formData.get('functionName')
 
-            let url = '/static/' + fileName + window.location.search
+        let url = '/static/' + fileName + window.location.search
 
-            fetch(url, {
-                method: 'PUT',
-                body: formData.get('code')
-            })
-            .then((res) => {
-                if (res.status === 200) {
-                    window.location.href = '/' + window.location.search
-                    $('bx-notification').hide()
-                } else {
-                    res.text().then((msg) => {
-                        $('bx-notification').setAttribute('subtitle', msg)
-                        $('bx-notification').show()
-                    })
-                }
-            })
-            .catch((err) => {
-                console.error(err)
-            })
-        }
-
-        function tryToDetermineLanguageFromFileName(filename) {
-            const items = filename.split('.')
-            if (items.length > 1) {
-                const lastItem = items[items.length - 1].toLowerCase()
-                if (languageExtensions[lastItem]) {
-                    setCodeLanguage(languageExtensions[lastItem])
-                } else {
-                    clearCodeLanguage()
-                }
+        fetch(url, {
+          method: 'PUT',
+          body: formData.get('code')
+        })
+          .then((res) => {
+            if (res.status === 200) {
+              window.location.href = '/' + window.location.search
+              $('bx-notification').hide()
             } else {
-                clearCodeLanguage()
+              res.text().then((msg) => {
+                $('bx-notification').setAttribute('subtitle', msg)
+                $('bx-notification').show()
+              })
             }
-        }
+          })
+          .catch((err) => {
+            console.error(err)
+          })
+      }
 
-        function clearCodeLanguage() {
-            codeEditor.setOption("mode", '')
-            $('#language-label').innerText = 'No language detected'
+      function tryToDetermineLanguageFromFileName(filename) {
+        const items = filename.split('.')
+        if (items.length > 1) {
+          const lastItem = items[items.length - 1].toLowerCase()
+          if (languageExtensions[lastItem]) {
+            setCodeLanguage(languageExtensions[lastItem])
+          } else {
+            clearCodeLanguage()
+          }
+        } else {
+          clearCodeLanguage()
         }
+      }
 
-        function setCodeLanguage(lang) {
-            codeEditor.setOption("mode", lang.mode)
-            $('#language-label').innerText = lang.label
-        }
+      function clearCodeLanguage() {
+        codeEditor.setOption("mode", '')
+        $('#language-label').innerText = 'No language detected'
+      }
+
+      function setCodeLanguage(lang) {
+        codeEditor.setOption("mode", lang.mode)
+        $('#language-label').innerText = lang.label
+      }
 
     </script>
 </head>
