@@ -37,6 +37,9 @@ function runtimeFromName(name) {
     if (name.endsWith('.js')) {
         return 'JavaScript'
     }
+    if (name.endsWith('.jsx')) {
+        return 'React'
+    }
     if (name.endsWith('.html')) {
         return 'HtmlMixed'
     }

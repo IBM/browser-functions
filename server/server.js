@@ -29,9 +29,10 @@ const config = require('./config')
 const functions = require("./functions");
 const utils = require("./utils");
 const controllers = require("./websockets/controllers");
-const {performance, setupPerformance} = require('./performance')
+const { performance, setupPerformance } = require('./performance')
 const timeout = require('connect-timeout');
 const bodyParser = require("body-parser");
+const { transformSync } = require('esbuild');
 
 const SERVER_TIMEOUT = 1000 * 60 * 15
 
@@ -43,7 +44,7 @@ app.use(bodyParser.json());
 setupPerformance()
 ui.setupUi(app)
 
-function haltOnTimedout(req, res, next){
+function haltOnTimedout(req, res, next) {
     if (!req.timedout) {
         next();
     }
@@ -141,7 +142,15 @@ app.all('/static/*', (req, res, next) => {
     // todo: allow this to be configurable per app
     res.set('Access-Control-Allow-Origin', '*')
 
-    const functionData = fs.readFileSync(filePath)
+    let functionData = fs.readFileSync(filePath);
+    logger.debug("LOADING USER CODE!");
+    logger.debug(filePath, params.ext);
+    if (['.jsx', '.tsx'].includes(params.ext)) {
+        logger.debug("TRANSFORMING REACT");
+        functionData = transformSync(functionData, { loader: 'jsx' }).code;
+        console.log(functionData);
+    }
+
     const templateFile = `${__dirname}/../templates/${fileType}.html`
     if (req.query['invoke'] && fs.existsSync(templateFile)) {
         // wrap the file in the appropriate template
@@ -152,7 +161,7 @@ app.all('/static/*', (req, res, next) => {
         res.send(output);
     } else {
         // skip template handling
-        res.type(fileType)
+        res.type(['jsx', 'tsx'].includes(fileType) ? 'js' : fileType);
         if (fileType === 'wasm') {
             res.type('application/wasm')
         }
@@ -218,7 +227,7 @@ function executeJobAndSendResponse(applicationId, functionPath, args, metadata, 
         jobId: jobId,
         applicationId: applicationId,
         functionName: functionPath,
-        onSuccess:  function (data) {
+        onSuccess: function (data) {
             onJobSuccess(data, res)
             measureResponseTime()
         },
@@ -242,6 +251,7 @@ function executeJobAndSendResponse(applicationId, functionPath, args, metadata, 
     const functionUrl = `${config.protocol}://${applicationId}.${config.functionDomain}${config.portInfo}/static/${functionPath}`
 
     const functionData = functions.getApplicationMetaData(applicationId)
+
     const executeController = controllers.getNextExecutionController(applicationId, functionData.settings)
     executeController.emit("EXECUTE", {
         url: functionUrl, path: functionPath,
@@ -316,22 +326,22 @@ io.of('/controller').on('connection', function (socket) {
     });
 
     socket.on("JOB_COMPLETED", (data) => {
-        jobQueue.completeJob({jobId: data.jobId, data: data.response})
+        jobQueue.completeJob({ jobId: data.jobId, data: data.response })
     })
 
     socket.on("JOB_STREAM", (data) => {
-        jobQueue.streamJob({jobId: data.jobId, data: data.response})
+        jobQueue.streamJob({ jobId: data.jobId, data: data.response })
     })
 
     socket.on("CONSOLE", (data) => {
         const jobData = jobQueue.getJob(data.jobId)
         if (jobData && jobData.applicationId) {
-            functions.saveJobLogs(jobData.applicationId, {jobId: data.jobId, type: data.type, functionName: jobData.functionName, message: data.message})
+            functions.saveJobLogs(jobData.applicationId, { jobId: data.jobId, type: data.type, functionName: jobData.functionName, message: data.message })
         }
     })
 
     socket.on("JOB_FAILED", (data) => {
-        jobQueue.failJob({jobId: data.jobId, data: data.response})
+        jobQueue.failJob({ jobId: data.jobId, data: data.response })
     })
 
     socket.on("IDENTITY", (data) => {
@@ -339,7 +349,7 @@ io.of('/controller').on('connection', function (socket) {
         socket.browserVersion = data.version
         socket.connectedAt = new Date()
         socket.id = uuid.v4()
-        socket.accessKey =  data.accessKey
+        socket.accessKey = data.accessKey
 
         logger.info(`Controller connected: ${socket.browser} ${socket.browserVersion}`)
 

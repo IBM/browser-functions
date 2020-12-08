@@ -25,6 +25,7 @@
         "body-parser": "1.18.3",
         "chokidar": "3.2.1",
         "connect-timeout": "1.9.0",
+        "esbuild": "^0.8.20",
         "express": "4.16.4",
         "formidable": "1.2.1",
         "pino": "5.12.6",

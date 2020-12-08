@@ -1,0 +1,10 @@
+{
+    "access-key": "1c272be6-da6a-4bdb-bdd9-c18c39919f29",
+    "author": "test@test.com",
+    "execution-environments": [
+        "master-chrome",
+        "user"
+    ],
+    "applicationId": "test-app",
+    "controllerUrl": "http://test-app.browserfunctions.test:3000/controller?access-key=1c272be6-da6a-4bdb-bdd9-c18c39919f29"
+}

@@ -5,18 +5,16 @@
 </head>
 <body id="body">
     <script>
-        function get(url) {
-            return new Promise((resolve, reject) => {
-                fetch(url).then(res => {
-                    if (res.status === 200) {
-                        res.text().then(text => {
-                            resolve(text)
-                        });
-                    } else {
-                        reject(res.statusText)
-                    }
-                })
-            })
+        async function get(url) {
+            const resp = await fetch(url);
+            if (res.status !== 200) {
+                /**
+                 * Since this function is only used here and gets try-catch'ed anyway we'll just return null
+                 */
+                // throw new Error(res.statusText);
+                return null; 
+            }
+            return res.text();
         }
 
         // load and execute function specified in URL param
@@ -30,25 +28,31 @@
         } else {
             let funcPath = params.get("bf")
             let rootPath = funcPath.substring(0, funcPath.lastIndexOf("/")) + "/"
-            let type = funcPath.split(".")[1]
+            let type = funcPath.split(".")[1] // A file called `index.jsx.js` will return 'jsx';
 
-            get("templates/" + type + ".html").then(template => {
-                let metadata = {
-                    'request': {
-                        'headers': [],
-                        'method': 'GET'
+            (async () => {
+                try {
+                    const template = await get("templates/" + type + ".html");
+
+                    const metadata = {
+                        'request': {
+                            'headers': [],
+                            'method': 'GET'
+                        }
                     }
+
+                    const environment = await get("functions_root" + rootPath + "environment.json");
+                    
+                    if (environment) {
+                        const {development} = JSON.parse(environment)
+                        metadata.env = development;
+                    }
+
+                    loadFunction(rootPath, funcPath, template, metadata);
+                } catch(e) {
+                    console.error(e);
                 }
-
-                get("functions_root" + rootPath + "environment.json").then(environment => {
-                    let env = JSON.parse(environment)
-                    metadata.env = env['development']
-                    loadFunction(rootPath, funcPath, template, metadata)
-                }).catch(err => {
-                    loadFunction(rootPath, funcPath, template, metadata)
-                })
-
-            }).catch(err => console.log(err))
+            })();
 
             function loadFunction(rootPath, funcPath, template, md) {
                 get("functions_root/" + funcPath).then(func => {

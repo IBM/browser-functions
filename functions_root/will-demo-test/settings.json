@@ -1,0 +1,9 @@
+{
+    "access-key": "043b0430-d2c8-49be-8679-a934ad1490f9",
+    "author": "test@aspen.cloud",
+    "execution-environments": [
+        "master-chrome",
+        "master-firefox",
+        "user"
+    ]
+}
