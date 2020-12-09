@@ -14,6 +14,17 @@
  * limitations under the License.
  */
 
+window.process = {
+    env: {
+        "NODE_ENV": "production"
+    },
+    nextTick: setTimeout.bind(window),
+}
+
+const RxDB = require('rxdb');
+import { nanoid } from 'nanoid';
+window.nanoid = nanoid;
+
 const urlParams = new URLSearchParams(window.location.search);
 const jobId = urlParams.get('jobId')
 const response = {
@@ -27,7 +38,7 @@ let headersSent = false;
 watchdogReset()
 const wdTimer = setInterval(() => { watchdogReset() }, 500);
 
-window.onerror = function(messageOrEvent, source, lineno, colno, error) {
+window.onerror = function (messageOrEvent, source, lineno, colno, error) {
     jobError({
         'event': messageOrEvent,
         'source': source,
@@ -49,7 +60,7 @@ window.onload = () => {
         }, "*")
     } else {
         args = {}
-        urlParams.forEach((v,k) => {
+        urlParams.forEach((v, k) => {
             args[k] = v
         })
 
@@ -71,8 +82,9 @@ window.onload = () => {
 async function onMessage(event) {
     try {
         if (event.data.event === 'JOB_DATA') {
-            let jobData = event.data.jobData
-            const result = await main(jobData.args, jobData.metadata)
+            let jobData = event.data.jobData;
+            const db = await getDatabase();
+            const result = await main(jobData.args, jobData.metadata, db)
             if (result && result.next) {
                 // stream iterator results back
                 let res = await result.next()
@@ -112,7 +124,7 @@ function jobCompleted(obj) {
     showResult(res)
     if (isBackend()) {
         // if response headers/status set, then send those
-        window.opener.postMessage({event: 'JOB_COMPLETED', result: res, jobId: jobId}, "*")
+        window.opener.postMessage({ event: 'JOB_COMPLETED', result: res, jobId: jobId }, "*")
     }
 }
 
@@ -123,7 +135,7 @@ function jobError(err) {
     showError(serializedError)
 
     if (isBackend()) {
-        window.opener.postMessage({event: 'JOB_FAILED', error: serializedError, jobId: jobId}, "*")
+        window.opener.postMessage({ event: 'JOB_FAILED', error: serializedError, jobId: jobId }, "*")
     }
 }
 
@@ -132,7 +144,7 @@ function jobStream(obj) {
     const res = buildResponse(obj)
     showResult(res)
     if (isBackend()) {
-        window.opener.postMessage({event: 'JOB_STREAM', result: res, jobId: jobId}, "*")
+        window.opener.postMessage({ event: 'JOB_STREAM', result: res, jobId: jobId }, "*")
     }
 }
 
@@ -150,7 +162,7 @@ function buildResponse(obj) {
 
 function watchdogReset() {
     if (isBackend()) {
-        window.opener.postMessage({event: 'JOB_WATCHDOG_RESET', tabName: window.name, jobId: jobId}, "*")
+        window.opener.postMessage({ event: 'JOB_WATCHDOG_RESET', tabName: window.name, jobId: jobId }, "*")
     }
 }
 
@@ -175,36 +187,46 @@ const sleep = milliseconds => {
     });
 };
 
-function captureConsole(){
+function captureConsole() {
     const original = window.console
     window.console = {
         ...original,
         dir: (...args) => {
-            window.opener.postMessage({event: 'CONSOLE', message: args.join(' '), type:"LOG", jobId: jobId}, "*")
+            window.opener.postMessage({ event: 'CONSOLE', message: args.join(' '), type: "LOG", jobId: jobId }, "*")
             original.log(...args)
         },
         log: (...args) => {
-            window.opener.postMessage({event: 'CONSOLE', message: args.join(' '), type:"LOG", jobId: jobId}, "*")
+            window.opener.postMessage({ event: 'CONSOLE', message: args.join(' '), type: "LOG", jobId: jobId }, "*")
             original.log(...args)
         },
         warn: (...args) => {
-            window.opener.postMessage({event: 'CONSOLE', message: args.join(' '), type:"WARN", jobId: jobId}, "*")
+            window.opener.postMessage({ event: 'CONSOLE', message: args.join(' '), type: "WARN", jobId: jobId }, "*")
             original.warn(...args)
         },
         error: (...args) => {
-            window.opener.postMessage({event: 'CONSOLE', message: args.join(' '), type:"ERROR", jobId: jobId}, "*")
+            window.opener.postMessage({ event: 'CONSOLE', message: args.join(' '), type: "ERROR", jobId: jobId }, "*")
             original.error(...args)
         }
     }
 }
 
+async function getDatabase() {
+    RxDB.addRxPlugin(require('pouchdb-adapter-indexeddb'));
+
+    const db = await RxDB.createRxDatabase({
+        name: 'main',
+        adapter: 'indexeddb',
+    });
+    return db;
+}
+
 function doSetup() {
     if (isBackend()) {
         // disallow certain things on the server
-        window.alert = function(obj) { console.log(obj) }
-        window.prompt = function() { return true }
-        window.confirm = function() { return true }
-        window.open = function() { return null }
+        window.alert = function (obj) { console.log(obj) }
+        window.prompt = function () { return true }
+        window.confirm = function () { return true }
+        window.open = function () { return null }
 
         captureConsole()
     }

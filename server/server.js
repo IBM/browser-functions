@@ -32,7 +32,7 @@ const controllers = require("./websockets/controllers");
 const { performance, setupPerformance } = require('./performance')
 const timeout = require('connect-timeout');
 const bodyParser = require("body-parser");
-const { transformSync } = require('esbuild');
+const { transformSync, buildSync } = require('esbuild');
 
 const SERVER_TIMEOUT = 1000 * 60 * 15
 
@@ -90,9 +90,19 @@ app.get('/controller', (req, res) => {
 
 // Specifically handle templates requesting the js files from templates folder
 // so that it works via function execute, as well as locally loading it
-app.get('/templates/:fileName.js', (req, res, next) => {
+app.get('/templates/:fileName.js', async (req, res, next) => {
     let filePath = `${__dirname}/../templates/${req.params.fileName}.js`
-    const functionData = fs.readFileSync(filePath)
+    //const functionData = fs.readFileSync(filePath);
+    const result = await buildSync({
+        entryPoints: [filePath],
+        bundle: true,
+        write: false,
+        define: {
+            global: "window",
+            "process.env.NODE_ENV": "'production'"
+        }
+    });
+    const functionData = await result.outputFiles[0].text
     res.type("js")
     res.send(functionData);
 })
