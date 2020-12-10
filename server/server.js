@@ -40,6 +40,9 @@ const handle = server.getRequestHandler()
 
 const SERVER_TIMEOUT = 1000 * 60 * 15
 
+
+// See: https://nextjs.org/docs/advanced-features/custom-server
+// Example: https://github.com/vercel/next.js/blob/canary/examples/custom-server-express/server.js 
 server.prepare().then(() => {
     const app = express();
     const httpServer = http.Server(app);
