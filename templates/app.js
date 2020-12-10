@@ -84,7 +84,8 @@ async function onMessage(event) {
         if (event.data.event === 'JOB_DATA') {
             let jobData = event.data.jobData;
             const db = await getDatabase();
-            const result = await main(jobData.args, jobData.metadata, db)
+            const collections = await getCollections(db);
+            const result = await main(jobData.args, jobData.metadata, collections);
             if (result && result.next) {
                 // stream iterator results back
                 let res = await result.next()
@@ -195,7 +196,26 @@ async function getDatabase() {
         name: 'main',
         adapter: 'indexeddb',
     });
+
     return db;
+}
+
+async function getCollections(db) {
+    console.log('Getting collections!');
+    try {
+        const resp = await fetch('database/collections.json');
+        const collectionConfigs = await resp.json();
+        // Convert stringified functions into actual JS functions
+        for (const migrationStep in collectionConfigs.migrationStrategies) {
+            collectionConfigs.migrationStrategies[migrationStep] = eval(collectionConfigs.migrationStrategies[migrationStep]);
+        }
+        const collections = await db.addCollections(collectionConfigs);
+        return collections;
+    } catch (e) {
+        console.error(e);
+        throw new Error('Could not find database schemas');
+    }
+    //return db.addCollections();
 }
 
 
