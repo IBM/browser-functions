@@ -27,8 +27,8 @@ const regex = utils.regex
 
 const serveOptions = {root: __dirname + '/../ui/'}
 
-function setupUi(app) {
-    serveStaticPages(app)
+function setupUi(app, nextjs) {
+    serveStaticPages(app, nextjs)
     serveLandingPage(app)
     functionsRoutes(app)
     packageRoutes(app)
@@ -71,7 +71,7 @@ function serveLandingPage(app) {
     })        
 }
 
-function serveStaticPages(app) {
+function serveStaticPages(app, nextjs) {
     app.use('/docs', express.static('docs/'))
     app.use('/assets', express.static('ui/assets'))
     app.use('/components', express.static('ui/components'))
@@ -80,7 +80,7 @@ function serveStaticPages(app) {
     app.get('/create', (req, res) => res.sendFile('create.html', serveOptions))
     app.get('/new', (req, res) => res.sendFile('new.html', serveOptions))
     app.get('/docs', (req, res) => res.sendFile('docs.html', serveOptions))
-    app.get('/packages', (req, res) => res.sendFile('packages.html', serveOptions));
+    app.get('/packages', (req, res) => nextjs.render(req, res, '/packages', req.query)); //serverOptions?
 }
 
 function createApplicationSaveRoute(app) {
@@ -204,6 +204,13 @@ function packageRoutes(app) {
     app.post('/dependencies/add', security.verifyAuthToken, bodyParser.json(), async function (req, res) {
         const dependencies = req.body["pack-names"];
         const isDev = req.body["dev-check"] || false;
+
+        if(!dependencies) {
+            res.status(500);
+            res.send('Could not parse dependencies');
+            return;
+        }
+
         try {
             await functions.addDependencies(req.applicationId, dependencies, isDev);
         } catch {

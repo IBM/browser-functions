@@ -281,7 +281,7 @@ async function addFunctionString(applicationId, filename, code) {
 }
 
 async function addDependencies(applicationId, newDependencies, isDev) {
-    const packageString = `${newDependencies}${isDev ? '--dev' : ''}`;
+    const packageString = `${newDependencies}${isDev ? ' --dev' : ''}`;
     
     const appDirectory = `${config.functionsRoot}${applicationId}`;
 
