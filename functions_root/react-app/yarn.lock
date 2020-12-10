@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-date-fn@^0.0.2:
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/date-fn/-/date-fn-0.0.2.tgz#26ef47168a12aefaea1d738069a2d42cc14cbb13"
-  integrity sha512-DBIKrlB2w9d6UPZwYn6qqSeKLwHt5uRf9Mj/PiGWHGQ5CxnvMCx2KteO5owfiknkYzMngrDwz5nX4CGxYlr0uA==
+date-fns@^2.16.1:
+  version "2.16.1"
+  resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-2.16.1.tgz#05775792c3f3331da812af253e1a935851d3834b"
+  integrity sha512-sAJVKx/FqrLYHAQeN7VpJrPhagZc9R4ImZIWYRFZaaohR3KzmuK88touwsSwSVT8Qcbd4zoDsnGfX4GFB4imyQ==
 
 "js-tokens@^3.0.0 || ^4.0.0":
   version "4.0.0"

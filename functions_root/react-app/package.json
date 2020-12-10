@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
-    "date-fn": "^0.0.2",
+    "date-fns": "^2.16.1",
     "lodash": "^4.17.20",
     "moment": "^2.29.1",
     "react": "^17.0.1",

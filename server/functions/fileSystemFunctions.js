@@ -294,7 +294,6 @@ async function addDependencies(applicationId, newDependencies, isDev) {
     await install(dependencies, {cwd: appDirectory, dest: destPath}); 
 
     packagesMap[applicationId] = packageJson;
-    return;
 }
 
 async function updateApplication(applicationId, applicationSettings) {

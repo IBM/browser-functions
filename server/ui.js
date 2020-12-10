@@ -204,7 +204,14 @@ function packageRoutes(app) {
     app.post('/dependencies/add', security.verifyAuthToken, bodyParser.json(), async function (req, res) {
         const dependencies = req.body["pack-names"];
         const isDev = req.body["dev-check"] || false;
-        await functions.addDependencies(req.applicationId, dependencies, isDev);
+        try {
+            await functions.addDependencies(req.applicationId, dependencies, isDev);
+        } catch {
+            res.status(500)
+            res.send('Failed to add dependencies')
+            return
+        }
+        
         const appData = functions.getApplicationDependencies(req.applicationId)
         res.send(appData);
     })
