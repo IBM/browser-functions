@@ -2,13 +2,15 @@
 <html>
 <head>
     <script src="/templates/logger.js"></script>
-<script src="/templates/app.js"></script>
+    <script src="/templates/app.js"></script>
 </head>
 <body>
 This is a function file
 
-<script>
+<script type="module">
     {{EMBEDDED_CODE}}
+
+    window.main = main;
 </script>
 
 </body>

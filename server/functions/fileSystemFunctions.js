@@ -25,6 +25,8 @@ const logger = require('../logger');
 const EventEmitter = require('events');
 const Tail = require('tail').Tail;
 const fileUtils = require('./fileUtils')
+const { execSync } = require('child_process');
+const { install } = require('esinstall');
 
 class FilesChangedEmitter extends EventEmitter {
 }
@@ -33,6 +35,7 @@ const filesChangedEmitter = new FilesChangedEmitter();
 
 let functions = {}
 let authKeyMap = {}
+let packagesMap = {}
 
 readFunctions().then(() => {
     logger.debug(`Read ${Object.keys(functions).length} applications to memory`)
@@ -54,6 +57,7 @@ function watchForFileChanges() {
 async function readFunctions() {
     functions = {}
     authKeyMap = {}
+    packagesMap = {}
 
     const appNames = await fsPromises.readdir(config.functionsRoot)
 
@@ -118,6 +122,8 @@ async function readSingleApplication(appName) {
             settings['environment'] = env
         }
 
+        const packageJson = await readPackageJson(appName);
+
         authKeyMap[settings["access-key"]] = appName
 
         functions[appName] = {
@@ -125,9 +131,29 @@ async function readSingleApplication(appName) {
             files
         }
 
+        packagesMap[appName] = packageJson;
+
     } catch (err) {
         logger.error('Unable to read application: ' + appName)
         logger.error(err)
+    }
+}
+
+async function readPackageJson(appName) {
+    let dependencies = {};
+    let devDependencies = {};
+    try {
+        const packageJsonBytes = await fsPromises.readFile(`${config.functionsRoot}${appName}/package.json`);
+        const packageJson = JSON.parse(packageJsonBytes)
+        dependencies = packageJson.dependencies || {};
+        devDependencies = packageJson.devDependencies || {};
+    } catch {
+        // may not exist
+    }
+
+    return {
+        dependencies,
+        devDependencies
     }
 }
 
@@ -137,6 +163,10 @@ function getApplicationIdFromAuthToken(authToken) {
 
 function getApplicationMetaData(appId) {
     return functions[appId]
+}
+
+function getApplicationDependencies(appId) {
+    return packagesMap[appId]
 }
 
 function lookupObjectByPath(lookupObject, lookupPath) {
@@ -193,6 +223,9 @@ async function createNewApplication(applicationId, email) {
     }
 
     await saveFunctionSettingsToFile(applicationId, settings)
+
+    execSync("yarn init -y", {cwd: `${config.functionsRoot}${applicationId}`})
+
     return settings["access-key"]
 }
 
@@ -245,6 +278,22 @@ async function addFunctionString(applicationId, filename, code) {
     const newFilePath = `${config.functionsRoot}${applicationId}/files/${filename}`
     await fsPromises.writeFile(newFilePath, code)
     await waitForNewFilesToBeRead()
+}
+
+async function addDependencies(applicationId, newDependencies, isDev) {
+    const packageString = `${newDependencies}${isDev ? '--dev' : ''}`;
+    
+    const appDirectory = `${config.functionsRoot}${applicationId}`;
+
+    execSync(`yarn add ${packageString}`, {cwd: appDirectory});
+
+    const packageJson = await readPackageJson(applicationId);
+
+    const destPath = `${appDirectory}/files/web_modules`;
+    const dependencies = Object.keys(packageJson.dependencies);
+    await install(dependencies, {cwd: appDirectory, dest: destPath}); 
+
+    packagesMap[applicationId] = packageJson;
 }
 
 async function updateApplication(applicationId, applicationSettings) {
@@ -316,11 +365,13 @@ async function tailLogs(applicationId, callback) {
 module.exports = {
     getApplicationIdFromAuthToken,
     getApplicationMetaData: getApplicationMetaData,
+    getApplicationDependencies,
     checkFunctionExists,
     checkApplicationExists,
     createNewApplication,
     addFunctionFile,
     addFunctionString,
+    addDependencies,
     updateApplication,
     applicationAllowsCustomControllers,
     deleteFunction,

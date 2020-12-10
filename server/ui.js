@@ -31,6 +31,7 @@ function setupUi(app) {
     serveStaticPages(app)
     serveLandingPage(app)
     functionsRoutes(app)
+    packageRoutes(app)
     logRoutes(app)
     createNewUserFunctionsRoute(app)
     createLoginRoute(app)
@@ -79,6 +80,7 @@ function serveStaticPages(app) {
     app.get('/create', (req, res) => res.sendFile('create.html', serveOptions))
     app.get('/new', (req, res) => res.sendFile('new.html', serveOptions))
     app.get('/docs', (req, res) => res.sendFile('docs.html', serveOptions))
+    app.get('/packages', (req, res) => res.sendFile('packages.html', serveOptions));
 }
 
 function createApplicationSaveRoute(app) {
@@ -190,6 +192,28 @@ function functionsRoutes(app) {
                 language: utils.runtimeFromName(functionName),
                 code: escapeHtml(code)
             })
+    })
+}
+
+function packageRoutes(app) {
+    app.get('/dependencies', security.verifyAuthToken, async function (req, res) {
+        const appData = functions.getApplicationDependencies(req.applicationId)
+        res.send(appData)
+    });
+
+    app.post('/dependencies/add', security.verifyAuthToken, bodyParser.json(), async function (req, res) {
+        const dependencies = req.body["pack-names"];
+        const isDev = req.body["dev-check"] || false;
+        try {
+            await functions.addDependencies(req.applicationId, dependencies, isDev);
+        } catch {
+            res.status(500)
+            res.send('Failed to add dependencies')
+            return
+        }
+        
+        const appData = functions.getApplicationDependencies(req.applicationId)
+        res.send(appData);
     })
 }
 
