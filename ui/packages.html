@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Packages</title>
+  <script type="module">
+    import {$, formToJSON} from './utils/utils.js'
+    
+    $("#add-dependency-btn").addEventListener('click', () => {
+      addDependencies().then((response) => {
+          $("#add-dependency-form").reset();
+          return response.json()
+        }).then(renderData)
+        .catch(err => {
+          // set error text
+        })
+      })
+
+    window.addEventListener('load', function () {
+        fetchPackageData()
+    })
+  
+    function fetchPackageData() {
+        fetch('/dependencies' + window.location.search)
+            .then(response => response.json())
+            .then(renderData)
+            .catch(err => {
+                // set error text
+            })
+    }
+  
+    function renderData(data) {
+      const dependencyList = $('#dependency-list')
+      const devDependencyList = $('#dev-dependency-list')
+      dependencyList.clear()
+      devDependencyList.clear()
+  
+      for (let dependency of Object.keys(data.dependencies)) {
+          renderDependencyRow(dependencyList, dependency, data.dependencies[dependency])
+      }
+  
+      for (let dependency of Object.keys(data.devDependencies)) {
+        renderDependencyRow(devDependencyList, dependency, data.dependencies[dependency])
+      }
+    }
+
+    function renderDependencyRow(listElement, dependency, version) {
+      const rowNode = document.createElement('li');
+      rowNode.innerText = `${dependency} - ${version}`;
+      listElement.appendChild(rowNode);
+    }
+
+    async function addDependencies() {
+      let url = "/dependencies/add" + window.location.search
+      const formJson = formToJSON($("#add-dependency-form"))
+
+      return fetch(url, {
+          method: 'POST',
+          body: JSON.stringify(formJson),
+          headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+          }
+      })
+    }
+  </script>
+</head>
+<body>
+  <h1>Package Manager</h1>
+
+  <form id="add-dependency-form">
+    <label for="pack-names">Package Names:</label>
+    <input type="text" id="pack-names" name="pack-names"> <br><br>
+    <label for="dev-check">Is Dev:</label>
+    <input type="checkbox" id="dev-check" name="dev-check"> <br><br>
+    <button id="add-dependency-btn" type="button">Add Package</button>
+  </form>
+  <div>
+    <h3>Dependencies</h3>
+    <div id="dependency-list"></div>
+    <h3>Dev Dependencies</h3>
+    <div id="dev-dependency-list"></div>
+  </div>
+</body>
+</html>

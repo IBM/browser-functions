@@ -133,6 +133,8 @@
                 $('#no-functions').show()
                 $('#create-link').href = "/create" + window.location.search
             }
+
+            $('#packages-link').href = "/packages" + window.location.search
         }
 
         function renderAppData(settings) {
@@ -366,9 +368,14 @@
     <div id="function-list">
     </div>
 
+    <div>
+        Manage your packages <a id="packages-link">here</a>
+    </div>
+
     <div id="drop-area" style="margin: 2em; display: none">
         Drag files here to upload or write code by clicking <a id="create-link" href="/">Create Function</a>
     </div>
+    
 
 </page-container>
 
