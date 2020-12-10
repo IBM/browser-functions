@@ -1,0 +1,44 @@
+{
+    "user_agents": {
+        "schema": {
+            "title": "user_agents",
+            "version": 0,
+            "description": "A log of user agents",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "primary": true
+                },
+                "userAgent": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "number"
+                }
+            }
+        },
+        "migrationStrategies": {}
+    },
+    "notes": {
+        "schema": {
+            "title": "notes",
+            "version": 0,
+            "description": "A list of short notes",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "primary": true
+                },
+                "message": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "number"
+                }
+            }
+        },
+        "migrationStrategies": {}
+    }
+}

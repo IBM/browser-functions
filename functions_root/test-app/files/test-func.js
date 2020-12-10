@@ -1,29 +1,8 @@
 
 
-async function main(args, env, db) {
+async function main(args, env, collections) {
 
-	const { "user_agents": userAgents } = await db.addCollections({
-		"user_agents": {
-			schema: {
-				"title": "user_agents",
-				"version": 0,
-				"description": "A log of user agents",
-				"type": "object",
-				"properties": {
-					"id": {
-						type: "string",
-						primary: true,
-					},
-					"userAgent": {
-						type: "string",
-					},
-					"date": {
-						type: "number"
-					}
-				}
-			}
-		}
-	});
+	const { "user_agents": userAgents } = collections;
 
 
 
