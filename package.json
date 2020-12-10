@@ -4,7 +4,7 @@
     "description": "Functions as a service, executed by a browser",
     "main": "index.js",
     "scripts": {
-        "start": "nodemon --inspect server/server.js | pino-pretty -t SYS:standard -i hostname",
+        "start": "nodemon --inspect server/server.js --ignore functions_root/ | pino-pretty -t SYS:standard -i hostname",
         "start:prod": "NODE_ENV=production node server/server.js"
     },
     "repository": {
@@ -35,6 +35,7 @@
         "tail": "2.0.2"
     },
     "devDependencies": {
+        "esinstall": "^0.4.0",
         "nodemon": "2.0.4",
         "pino-pretty": "3.2.0"
     }
