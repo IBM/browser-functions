@@ -8,3 +8,4 @@ out.log
 .pnp/
 dist/
 application.log
+.next/
