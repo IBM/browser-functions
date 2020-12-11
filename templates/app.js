@@ -83,8 +83,15 @@ async function onMessage(event) {
     try {
         if (event.data.event === 'JOB_DATA') {
             let jobData = event.data.jobData;
-            const db = await getDatabase();
-            const collections = await getCollections(db);
+            let collections = {};
+            if (jobData.args.enableDB) { // e.g. demo.dev.aspen.cloud/func.js?enableDB=true
+                try {
+                    const db = await getDatabase();
+                    collections = await getCollections(db);
+                } catch (e) {
+                    console.log('Not attaching collections');
+                }
+            }
             const result = await main(jobData.args, jobData.metadata, collections);
             if (result && result.next) {
                 // stream iterator results back
@@ -215,7 +222,6 @@ async function getCollections(db) {
         console.error(e);
         throw new Error('Could not find database schemas');
     }
-    //return db.addCollections();
 }
 
 
