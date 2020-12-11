@@ -16,6 +16,7 @@ COPY --chown=chrome . /app
 USER chrome
 WORKDIR /app
 RUN npm install
+RUN npm run build
 ENTRYPOINT ["tini", "--"]
 
 # Run your program under Tini

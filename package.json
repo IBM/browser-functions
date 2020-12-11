@@ -5,7 +5,8 @@
     "main": "index.js",
     "scripts": {
         "start": "nodemon --inspect server/server.js --ignore functions_root/ | pino-pretty -t SYS:standard -i hostname",
-        "start:prod": "NODE_ENV=production node server/server.js"
+        "start:prod": "NODE_ENV=production node server/server.js",
+        "build": "next build ui"
     },
     "repository": {
         "type": "git",
