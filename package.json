@@ -40,10 +40,10 @@
         "react": "^17.0.1",
         "react-dom": "^17.0.1",
         "socket.io": "2.3.0",
-        "tail": "2.0.2"
+        "tail": "2.0.2",
+        "esinstall": "^0.4.0"
     },
     "devDependencies": {
-        "esinstall": "^0.4.0",
         "nodemon": "2.0.4",
         "pino-pretty": "3.2.0"
     }
