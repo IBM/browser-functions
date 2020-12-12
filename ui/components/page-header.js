@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {withUtils} from "../utils/utils.js";
+import { withUtils } from "../utils/utils.js";
 
 const template = document.createElement('template');
 template.innerHTML = `
@@ -26,7 +26,7 @@ template.innerHTML = `
     </style>
     
     <header class="bx--header">
-        <a class="bx--header__name" id="header-link" href="/"><slot name="title">IBM Research | Browser Functions</slot></a>
+        <a class="bx--header__name" id="header-link" href="/"><slot name="title">Cloud Code by Aspen</slot></a>
         <slot name="menuItems" class="menu-items">
         </slot>
         <div class="bx--header__global">
@@ -49,7 +49,7 @@ template.innerHTML = `
 class PageHeader extends withUtils(HTMLElement) {
     constructor() {
         super();
-        this.attachShadow({'mode': 'open'});
+        this.attachShadow({ 'mode': 'open' });
         this.shadowRoot.appendChild(template.content.cloneNode(true));
 
         this.shadowRoot.querySelector('#help-button').addEventListener('click', () => {
@@ -58,7 +58,7 @@ class PageHeader extends withUtils(HTMLElement) {
 
         const url = new URL(window.location)
         let hostnameParts = url.hostname.split('.');
-        url.hostname = hostnameParts.slice(hostnameParts.length - 2,hostnameParts.length).join('.')
+        url.hostname = hostnameParts.slice(hostnameParts.length - 2, hostnameParts.length).join('.')
         url.pathname = ''
         url.search = ''
         this.$('#header-link').href = url.toString()
