@@ -95,6 +95,7 @@ function extToLanguage(ext: string) {
   if (["py"].includes(ext)) return "python";
   if (["ts", "tsx"].includes(ext)) return "typescript";
   if (["js", "jsx"].includes(ext)) return "javascript";
+  if (ext === "html") return "html";
   return "";
   //throw new Error('Unsupported language');
 }
