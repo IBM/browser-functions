@@ -2,7 +2,7 @@
 <html lang="en" class="no-js">
 <head>
     <meta charset="UTF-8">
-    <title>Browser Functions</title>
+    <title>Cloud Code</title>
 
     <link rel="stylesheet" type="text/css" href="./assets/carbon-components@10.3.2/carbon-components.min.css"/>
     <script defer type="text/javascript" src="./assets/carbon-components@10.3.2/carbon-components.min.js"></script>
@@ -145,7 +145,7 @@
 
 <div class="hero-image">
     <div class="overlay">
-        <h1>Browser Functions</h1>
+        <h1>Cloud Code</h1>
         <h2>Execute your <span style="color:#61d4d1">HTML5 / JavaScript functions</span> on a <span style="color:#61d4d1">server</span></h2>
         <div class="actions">
             <a href="/new">Get Started</a>
@@ -217,39 +217,26 @@
 <page-container>
     <div class="tiles">
         <content-tile header="What is it?">
-            Browser Functions is a platform for running functions written using the Web API, on a server. 
-            Any code executable by a modern browser, such as HTML, JavaScript, CSS, or even WebAssembly, can be 
-            executed inside Browser Functions. 
+            Cloud Code is a platform for turning ideas into high-performing, scale-able web applications. 
         </content-tile>
         <content-tile header="How does it work?">
-            Browser Functions uses execution engines to execute your code, where the execution engines are actual web browsers.
+            Cloud Code uses execution engines to execute your code, where the execution engines are actual web browsers.
             This makes the platform fast and lightweight.
         </content-tile>
-        <content-tile header="Architecture">
-            To co-ordinate the jobs and the execution engines, Browser Functions contains a *server* which 
-            launches a *controller* into each execution engine. The controllers manage the worker tabs and 
-            communicate back to the server via a web socket.
+        <content-tile header="What languages are supported?">
+            Cloud Code supports any language that compiles to Javascript or Web Assembly. This currently includes Typescript, Rust, Python, AssemblyScript, with more coming soon.
+            We also provide built-in support for React, Vue, Svelte, and Pug - no configuration or bundlers required!
         </content-tile>
         <content-tile header="Performance">
-            Functions in Browser Functions run about 10 times faster than an equivalent function executing on a container-based serverless platform, 
+            Functions in Cloud Code run about 10 times faster than an equivalent function executing on a container-based serverless platform, 
             on the same hardware.
         </content-tile>
         <content-tile header="Secure">
-            Browser Functions leverages the same security that protects your banking tab from other malicious sites.
+            Cloud Code leverages the same security that allows you to safely browse the web. 
         </content-tile>
         <content-tile header="Instantly Scalable">
-            You can spin up execution engines (browsers) in seconds, and they can run anywhere. You can choose
-            between running Firefox, Chrome/Chromium, or even all of them together.
+            We instantly deploy your code and spin up as many functions as needed to handle your apps traffic or workloads. 
         </content-tile>
-        <content-tile header="Hybrid Cloud Ready">
-            You can deploy Browser Functions inside your private cloud, or simply run the execution engine(s) within
-            your private cloud. You can choose to run sensitive functions within your private cloud, but public
-            functions on the public cloud.
-        </content-tile>
-        <content-tile header="Open Source">
-            Browser Functions is open source, and you can deploy it to your own private cloud.
-        </content-tile>
-
     </div>
 
 
