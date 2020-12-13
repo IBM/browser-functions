@@ -76,6 +76,7 @@ export default function EditorPage({ code, fileName: initialFileName }) {
         language={language}
         value={code}
         editorDidMount={handleEditorDidMount}
+        theme="dark"
       />
     </div>
   );
