@@ -25,12 +25,12 @@ const functions = require("./functions");
 
 const regex = utils.regex
 
-const serveOptions = {root: __dirname + '/../ui/'}
+const serveOptions = { root: __dirname + '/../ui/' }
 
 function setupUi(app, nextjs) {
     serveStaticPages(app, nextjs)
     serveLandingPage(app)
-    functionsRoutes(app)
+    functionsRoutes(app, nextjs)
     packageRoutes(app)
     logRoutes(app)
     createNewUserFunctionsRoute(app)
@@ -68,7 +68,7 @@ function serveLandingPage(app) {
 
     app.get('/unsupported-browser', (req, res) => {
         res.sendFile("unsupported-browser.html", serveOptions)
-    })        
+    })
 }
 
 function serveStaticPages(app, nextjs) {
@@ -77,7 +77,7 @@ function serveStaticPages(app, nextjs) {
     app.use('/components', express.static('ui/components'))
     app.use('/utils', express.static('ui/utils'))
     app.get('/login', (req, res) => res.sendFile('login.html', serveOptions))
-    app.get('/create', (req, res) => res.sendFile('create.html', serveOptions))
+    app.get('/create', (req, res) => nextjs.render(req, res, '/editor', {})) // TODO add templates for JSX, Python, etc
     app.get('/new', (req, res) => res.sendFile('new.html', serveOptions))
     app.get('/docs', (req, res) => res.sendFile('docs.html', serveOptions))
     app.get('/packages', (req, res) => nextjs.render(req, res, '/packages', req.query)); //serverOptions?
@@ -92,11 +92,11 @@ function createApplicationSaveRoute(app) {
 }
 
 function createLoginRoute(app) {
-    app.post('/login', bodyParser.urlencoded({extended: false}), function (req, res) {
+    app.post('/login', bodyParser.urlencoded({ extended: false }), function (req, res) {
         const authToken = req.body.accessKey
         const appId = functions.getApplicationIdFromAuthToken(authToken)
         if (!appId) {
-            utils.renderTemplate(res, serveOptions.root + 'login.html', {error: 'Access token could not be validated'})
+            utils.renderTemplate(res, serveOptions.root + 'login.html', { error: 'Access token could not be validated' })
         } else {
             const reqPort = utils.getPortFromRequest(req)
             res.redirect(`${req.protocol}://${appId}.${config.functionDomain}${reqPort}?access-key=${authToken}`)
@@ -105,12 +105,12 @@ function createLoginRoute(app) {
 }
 
 function createNewAppRoute(app) {
-    app.post('/new', bodyParser.urlencoded({extended: false}), async function (req, res) {
+    app.post('/new', bodyParser.urlencoded({ extended: false }), async function (req, res) {
         let applicationId = req.body.applicationId
         let email = req.body.email
 
         if (!applicationId || !email) {
-            utils.renderTemplate(res, serveOptions.root + 'new.html', {error: 'Email and Application ID are required'})
+            utils.renderTemplate(res, serveOptions.root + 'new.html', { error: 'Email and Application ID are required' })
             return
         }
 
@@ -136,15 +136,15 @@ function createNewAppRoute(app) {
         }
 
         if (error) {
-            utils.renderTemplate(res, serveOptions.root + 'new.html', {error, fields: {applicationId, email}})
+            utils.renderTemplate(res, serveOptions.root + 'new.html', { error, fields: { applicationId, email } })
             return
         }
 
         try {
             const accessKey = await functions.createNewApplication(applicationId, email)
-            utils.renderTemplate(res, serveOptions.root + 'new.html', {accessKey, applicationId})
+            utils.renderTemplate(res, serveOptions.root + 'new.html', { accessKey, applicationId })
         } catch (e) {
-            utils.renderTemplate(res, serveOptions.root + 'new.html', {error: e.message})
+            utils.renderTemplate(res, serveOptions.root + 'new.html', { error: e.message })
         }
     })
 }
@@ -163,17 +163,17 @@ function logRoutes(app) {
             res.write(`data: ${line}\n\n`)
         })
 
-        res.on('close', function(e) {
+        res.on('close', function (e) {
             tail.unwatch()
         })
     })
 }
 
-function functionsRoutes(app) {
+function functionsRoutes(app, nextjs) {
     app.get('/functions', security.verifyAuthToken, async function (req, res) {
         const appData = functions.getApplicationMetaData(req.applicationId)
         const data = {}
-        data[req.applicationId] = {functions: appData.files, settings: appData.settings}
+        data[req.applicationId] = { functions: appData.files, settings: appData.settings }
         res.send(data)
     })
 
@@ -185,6 +185,8 @@ function functionsRoutes(app) {
     app.get('/edit/*', security.verifyAuthToken, async function (req, res) {
         const functionName = req.params[0]
         const code = await functions.getFunctionAsString(req.applicationId, functionName)
+
+        return nextjs.render(req, res, '/editor', { code, fileName: functionName });
 
         utils.renderTemplate(res, serveOptions.root + 'create.html',
             {
@@ -205,7 +207,7 @@ function packageRoutes(app) {
         const dependencies = req.body["pack-names"];
         const isDev = req.body["dev-check"] || false;
 
-        if(!dependencies) {
+        if (!dependencies) {
             res.status(500);
             res.send('Could not parse dependencies');
             return;
@@ -218,7 +220,7 @@ function packageRoutes(app) {
             res.send('Failed to add dependencies')
             return
         }
-        
+
         const appData = functions.getApplicationDependencies(req.applicationId)
         res.send(appData);
     })
@@ -293,4 +295,4 @@ function createNewUserFunctionsRoute(app) {
     })
 }
 
-module.exports = {setupUi}
+module.exports = { setupUi }
