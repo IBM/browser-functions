@@ -1,11 +1,28 @@
 import React, { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import Editor from "@monaco-editor/react";
+import { FileTree, IFileTreeNode, FileNode, DirectoryNode } from "../components/react/file-tree";
+import path from "path";
 
-export default function EditorPage({ code, fileName: initialFileName }) {
+export default function EditorPage({ code, fileName: initialFileName, applicationId }) {
   const [isEditorReady, setIsEditorReady] = useState(false);
   const valueGetter = useRef<() => string>();
   const editorRef = useRef();
   const [name, setName] = useState(initialFileName);
+  const [fileTree, setFileTree] = useState<IFileTreeNode[]>([]);
+  const [displayedCode, setDisplayedCode] = useState(code);
+
+  useEffect(() => {
+    const getFileTreeData = async () => {
+      const functionDataRaw = await fetch("/functions" + window.location.search);
+      const functionData = await functionDataRaw.json();
+      const fileTreeData = functionData[applicationId].functions;
+      const transformedData = _transformFileTreeData(fileTreeData);
+      setFileTree(transformedData);
+    };
+
+    getFileTreeData();
+  }, []);
 
   useEffect(() => {
     if (editorRef.current) {
@@ -43,6 +60,45 @@ export default function EditorPage({ code, fileName: initialFileName }) {
       });
   }
 
+  const fileOpenCallback = (filePath: string): (() => void) => {
+    return () => {
+      let url = path.join("/code", filePath);
+      fetch(url + window.location.search)
+        .then((resp) => resp.text())
+        .then((code) => {
+          setDisplayedCode(code);
+        })
+        .catch((err) => {
+          alert("Couldn't load function!");
+          console.log(err);
+        });
+    };
+  };
+
+  const _transformFileTreeData = (fileTreeData): IFileTreeNode[] => {
+    let fileIdRef = { id: -1 };
+    const transformFileDataHelper = (fileTreeData, fileIdRef, pathParts) => {
+      const data: IFileTreeNode[] = [];
+      for (const levelName in fileTreeData) {
+        fileIdRef.id += 1;
+        pathParts.push(levelName);
+        const { _type, ...children } = fileTreeData[levelName];
+        if (_type === "file") {
+          data.push(new FileNode(fileIdRef.id, levelName, fileOpenCallback(path.join(...pathParts))));
+        } else {
+          data.push(
+            new DirectoryNode(fileIdRef.id, levelName, transformFileDataHelper(children, fileIdRef, pathParts)),
+          );
+        }
+        pathParts.pop();
+      }
+
+      return data;
+    };
+
+    return transformFileDataHelper(fileTreeData, fileIdRef, []);
+  };
+
   const language = extToLanguage(name.split(".")[1]);
 
   return (
@@ -67,14 +123,12 @@ export default function EditorPage({ code, fileName: initialFileName }) {
       >
         <input value={name} onChange={(e) => setName(e.target.value)} />
         <button onClick={() => saveFileAs(name)}>Save</button>
-        <p>
-          <i>File Picker (coming soon)</i>
-        </p>
+        <FileTree nodes={fileTree} />
       </div>
       <Editor
         height="100vh"
         language={language}
-        value={code}
+        value={displayedCode}
         editorDidMount={handleEditorDidMount}
         theme="dark"
       />
@@ -83,11 +137,12 @@ export default function EditorPage({ code, fileName: initialFileName }) {
 }
 
 export async function getServerSideProps({ query }) {
-  const { code, fileName } = query;
+  const { code, fileName, applicationId } = query;
   return {
     props: {
       code: code || "",
       fileName: fileName || "Untitled",
+      applicationId: applicationId || "",
     },
   };
 }

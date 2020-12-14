@@ -182,11 +182,17 @@ function functionsRoutes(app, nextjs) {
         res.sendStatus(200)
     })
 
-    app.get('/edit/*', security.verifyAuthToken, async function (req, res) {
+    app.get('/code/*', security.verifyAuthToken, async function (req, res) {
         const functionName = req.params[0]
         const code = await functions.getFunctionAsString(req.applicationId, functionName)
 
-        return nextjs.render(req, res, '/editor', { code, fileName: functionName });
+        res.send(code);
+    });
+
+    app.get('/edit/*', security.verifyAuthToken, async function (req, res) {
+        const functionName = req.params[0]
+        const code = await functions.getFunctionAsString(req.applicationId, functionName)
+        return nextjs.render(req, res, '/editor', { code, fileName: functionName, applicationId: req.applicationId });
 
         utils.renderTemplate(res, serveOptions.root + 'create.html',
             {
