@@ -1,27 +1,22 @@
 import React, { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import Editor from "@monaco-editor/react";
 import { FileTree, IFileTreeNode, FileNode, DirectoryNode } from "../components/react/file-tree";
 import path from "path";
 
-export default function EditorPage({ code, fileName: initialFileName, applicationId }) {
+export default function EditorPage(props) {
   const [isEditorReady, setIsEditorReady] = useState(false);
   const valueGetter = useRef<() => string>();
   const editorRef = useRef();
-  const [name, setName] = useState(initialFileName);
+  const [name, setName] = useState(props.openFile);
   const [fileTree, setFileTree] = useState<IFileTreeNode[]>([]);
-  const [displayedCode, setDisplayedCode] = useState(code);
+  const [displayedCode, setDisplayedCode] = useState(props.code);
 
   useEffect(() => {
-    const getFileTreeData = async () => {
-      const functionDataRaw = await fetch("/functions" + window.location.search);
-      const functionData = await functionDataRaw.json();
-      const fileTreeData = functionData[applicationId].functions;
-      const transformedData = _transformFileTreeData(fileTreeData);
+      const transformedData = _transformFileTreeData(props.fileTree);
       setFileTree(transformedData);
-    };
-
-    getFileTreeData();
+      if(props.openFile) {
+        handleInitOpenFile(props.openFile);
+      }
   }, []);
 
   useEffect(() => {
@@ -60,17 +55,26 @@ export default function EditorPage({ code, fileName: initialFileName, applicatio
       });
   }
 
+  const handleInitOpenFile = (filePath:string) => {
+    // TODO - at least highlight proper file in filetree
+  }
+
   const fileOpenCallback = (filePath: string): (() => void) => {
     return () => {
       let url = path.join("/code", filePath);
       fetch(url + window.location.search)
-        .then((resp) => resp.text())
+        .then((resp) => {
+          if (resp.status === 200) {
+            return resp.text();
+          }
+          throw new Error("Issue parsing response");
+        })
         .then((code) => {
           setDisplayedCode(code);
+          setName(filePath);
         })
         .catch((err) => {
           alert("Couldn't load function!");
-          console.log(err);
         });
     };
   };
@@ -136,13 +140,15 @@ export default function EditorPage({ code, fileName: initialFileName, applicatio
   );
 }
 
+// initial render
 export async function getServerSideProps({ query }) {
-  const { code, fileName, applicationId } = query;
+  const { code, openFile, fileTree } = query;
+
   return {
     props: {
       code: code || "",
-      fileName: fileName || "Untitled",
-      applicationId: applicationId || "",
+      openFile: openFile || "",
+      fileTree: fileTree || []
     },
   };
 }
