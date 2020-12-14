@@ -23,6 +23,7 @@
     ],
     "license": "Apache-2.0",
     "dependencies": {
+        "@blueprintjs/core": "^3.36.0",
         "@monaco-editor/react": "^3.7.2",
         "body-parser": "1.18.3",
         "chokidar": "3.2.1",
