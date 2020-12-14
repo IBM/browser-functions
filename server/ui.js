@@ -196,7 +196,7 @@ function functionsRoutes(app, nextjs) {
         if (functionName) {
             code = await functions.getFunctionAsString(req.applicationId, functionName); // TODO: may fail
         }
-        return nextjs.render(req, res, `/editor`, { fileTree: appData.files, code, openFile: functionName});
+        return nextjs.render(req, res, `/editor`, { fileTree: appData.files, code, fileName: functionName});
     });
 }
 

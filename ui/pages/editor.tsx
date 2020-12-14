@@ -2,20 +2,34 @@ import React, { useEffect, useRef, useState } from "react";
 import Editor from "@monaco-editor/react";
 import { FileTree, IFileTreeNode, FileNode, DirectoryNode } from "../components/react/file-tree";
 import path from "path";
+import useSWR from 'swr';
 
 export default function EditorPage(props) {
+
+  const codeFetcher = async (url) => {
+    const data = await fetch(url + window.location.search);
+    return await data.text();
+  };
+
+  const initialCodeRoute = props.fileName ? path.join('/code/' + props.fileName) : '';
+  const initialCode = props.code;
+  const initialName = props.fileName;
+
   const [isEditorReady, setIsEditorReady] = useState(false);
   const valueGetter = useRef<() => string>();
   const editorRef = useRef();
-  const [name, setName] = useState(props.openFile);
+  const [name, setName] = useState(props.fileName);
   const [fileTree, setFileTree] = useState<IFileTreeNode[]>([]);
-  const [displayedCode, setDisplayedCode] = useState(props.code);
+  const [codeRoute, setCodeRoute] = useState(initialCodeRoute)
+
+  // https://github.com/vercel/swr/issues/284 - using initialData for SSR has open bug
+  const { data: code, error: codeError } = useSWR(name ? codeRoute : null, codeFetcher, { initialData: name === initialName ? initialCode : undefined }); 
 
   useEffect(() => {
       const transformedData = _transformFileTreeData(props.fileTree);
       setFileTree(transformedData);
-      if(props.openFile) {
-        handleInitOpenFile(props.openFile);
+      if(props.fileName) {
+        handleInitOpenFile(props.fileName);
       }
   }, []);
 
@@ -23,6 +37,7 @@ export default function EditorPage(props) {
     if (editorRef.current) {
       bindSaveCommand(editorRef.current, () => saveFileAs(name));
     }
+    setCodeRoute(path.join('/code', name));
   }, [name]);
 
   function handleEditorDidMount(_valueGetter: () => string, editor) {
@@ -56,26 +71,12 @@ export default function EditorPage(props) {
   }
 
   const handleInitOpenFile = (filePath:string) => {
-    // TODO - at least highlight proper file in filetree
+    // TODO - highlight/expand proper file in filetree
   }
 
   const fileOpenCallback = (filePath: string): (() => void) => {
     return () => {
-      let url = path.join("/code", filePath);
-      fetch(url + window.location.search)
-        .then((resp) => {
-          if (resp.status === 200) {
-            return resp.text();
-          }
-          throw new Error("Issue parsing response");
-        })
-        .then((code) => {
-          setDisplayedCode(code);
-          setName(filePath);
-        })
-        .catch((err) => {
-          alert("Couldn't load function!");
-        });
+      setName(filePath);
     };
   };
 
@@ -132,7 +133,7 @@ export default function EditorPage(props) {
       <Editor
         height="100vh"
         language={language}
-        value={displayedCode}
+        value={code}
         editorDidMount={handleEditorDidMount}
         theme="dark"
       />
@@ -140,14 +141,13 @@ export default function EditorPage(props) {
   );
 }
 
-// initial render
 export async function getServerSideProps({ query }) {
-  const { code, openFile, fileTree } = query;
+  const { code, fileName, fileTree } = query;
 
   return {
     props: {
       code: code || "",
-      openFile: openFile || "",
+      fileName: fileName || "",
       fileTree: fileTree || []
     },
   };
