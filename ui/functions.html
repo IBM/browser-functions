@@ -171,7 +171,7 @@
         }
 
         async function editFunction(appId, functionName) {
-            window.location.href = `/edit/${functionName}` + window.location.search
+            window.location.href = `/edit` + window.location.search + `&open=${functionName}`
         }
 
         async function deleteFunction(appId, functionName) {

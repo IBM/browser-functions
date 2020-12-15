@@ -23,6 +23,7 @@
     ],
     "license": "Apache-2.0",
     "dependencies": {
+        "@blueprintjs/core": "^3.36.0",
         "@monaco-editor/react": "^3.7.2",
         "body-parser": "1.18.3",
         "chokidar": "3.2.1",
@@ -43,6 +44,7 @@
         "rxdb": "^9.10.1",
         "rxjs": "^6.6.3",
         "socket.io": "2.3.0",
+        "swr": "^0.3.9",
         "tail": "2.0.2",
         "@types/react": "^17.0.0",
         "typescript": "^4.1.3"

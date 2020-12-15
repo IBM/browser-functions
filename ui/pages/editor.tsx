@@ -1,16 +1,43 @@
 import React, { useEffect, useRef, useState } from "react";
 import Editor from "@monaco-editor/react";
+import { FileTree, IFileTreeNode, FileNode, DirectoryNode } from "../components/react/file-tree";
+import path from "path";
+import useSWR from 'swr';
 
-export default function EditorPage({ code, fileName: initialFileName }) {
+export default function EditorPage(props) {
+
+  const codeFetcher = async (url) => {
+    const data = await fetch(url + window.location.search);
+    return await data.text();
+  };
+
+  const initialCodeRoute = props.fileName ? path.join('/code/' + props.fileName) : '';
+  const initialCode = props.code;
+  const initialName = props.fileName;
+
   const [isEditorReady, setIsEditorReady] = useState(false);
   const valueGetter = useRef<() => string>();
   const editorRef = useRef();
-  const [name, setName] = useState(initialFileName);
+  const [name, setName] = useState(props.fileName);
+  const [fileTree, setFileTree] = useState<IFileTreeNode[]>([]);
+  const [codeRoute, setCodeRoute] = useState(initialCodeRoute)
+
+  // https://github.com/vercel/swr/issues/284 - using initialData for SSR has open bug
+  const { data: code, error: codeError } = useSWR(name ? codeRoute : null, codeFetcher, { initialData: name === initialName ? initialCode : undefined }); 
+
+  useEffect(() => {
+      const transformedData = _transformFileTreeData(props.fileTree);
+      setFileTree(transformedData);
+      if(props.fileName) {
+        handleInitOpenFile(props.fileName);
+      }
+  }, []);
 
   useEffect(() => {
     if (editorRef.current) {
       bindSaveCommand(editorRef.current, () => saveFileAs(name));
     }
+    setCodeRoute(path.join('/code', name));
   }, [name]);
 
   function handleEditorDidMount(_valueGetter: () => string, editor) {
@@ -43,6 +70,40 @@ export default function EditorPage({ code, fileName: initialFileName }) {
       });
   }
 
+  const handleInitOpenFile = (filePath:string) => {
+    // TODO - highlight/expand proper file in filetree
+  }
+
+  const fileOpenCallback = (filePath: string): (() => void) => {
+    return () => {
+      setName(filePath);
+    };
+  };
+
+  const _transformFileTreeData = (fileTreeData): IFileTreeNode[] => {
+    let fileIdRef = { id: -1 };
+    const transformFileDataHelper = (fileTreeData, fileIdRef, pathParts) => {
+      const data: IFileTreeNode[] = [];
+      for (const levelName in fileTreeData) {
+        fileIdRef.id += 1;
+        pathParts.push(levelName);
+        const { _type, ...children } = fileTreeData[levelName];
+        if (_type === "file") {
+          data.push(new FileNode(fileIdRef.id, levelName, fileOpenCallback(path.join(...pathParts))));
+        } else {
+          data.push(
+            new DirectoryNode(fileIdRef.id, levelName, transformFileDataHelper(children, fileIdRef, pathParts)),
+          );
+        }
+        pathParts.pop();
+      }
+
+      return data;
+    };
+
+    return transformFileDataHelper(fileTreeData, fileIdRef, []);
+  };
+
   const language = extToLanguage(name.split(".")[1]);
 
   return (
@@ -67,9 +128,7 @@ export default function EditorPage({ code, fileName: initialFileName }) {
       >
         <input value={name} onChange={(e) => setName(e.target.value)} />
         <button onClick={() => saveFileAs(name)}>Save</button>
-        <p>
-          <i>File Picker (coming soon)</i>
-        </p>
+        <FileTree nodes={fileTree} />
       </div>
       <Editor
         height="100vh"
@@ -83,11 +142,13 @@ export default function EditorPage({ code, fileName: initialFileName }) {
 }
 
 export async function getServerSideProps({ query }) {
-  const { code, fileName } = query;
+  const { code, fileName, fileTree } = query;
+
   return {
     props: {
       code: code || "",
-      fileName: fileName || "Untitled",
+      fileName: fileName || "",
+      fileTree: fileTree || []
     },
   };
 }
