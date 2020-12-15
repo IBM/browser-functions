@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+      "target": "es6",
+      "allowJs": true,
+      "skipLibCheck": true,
+      "strict": false,
+      "forceConsistentCasingInFileNames": true,
+      "esModuleInterop": true,
+      "module": "commonjs",
+      "moduleResolution": "node",
+      "resolveJsonModule": true,
+      "outDir": "../dist"
+    },
+    "include": [
+        "*"
+    ],
+    "exclude": [
+      "node_modules",
+      "functions"
+    ]
+  }
+  
