@@ -33,7 +33,7 @@ const { performance, setupPerformance } = require('./performance')
 const timeout = require('connect-timeout');
 const bodyParser = require("body-parser");
 const { transformSync, buildSync } = require('esbuild');
-const nextjs  = require('next')
+const nextjs = require('next')
 const dev = process.env.NODE_ENV !== 'production'
 const server = nextjs({ dev, dir: './ui' })
 const handle = server.getRequestHandler()
@@ -47,7 +47,7 @@ server.prepare().then(() => {
     const app = express();
     const httpServer = http.Server(app);
     const ioListener = io(httpServer);
-    
+
     app.use(timeout(SERVER_TIMEOUT));
     app.use(haltOnTimedout);
     app.use(bodyParser.urlencoded({ extended: false }));
@@ -109,17 +109,17 @@ server.prepare().then(() => {
     // so that it works via function execute, as well as locally loading it
     app.get('/templates/:fileName.js', async (req, res, next) => {
         let filePath = `${__dirname}/../templates/${req.params.fileName}.js`
-        //const functionData = fs.readFileSync(filePath);
-        const result = await buildSync({
-            entryPoints: [filePath],
-            bundle: true,
-            write: false,
-            define: {
-                global: "window",
-                "process.env.NODE_ENV": "'production'"
-            }
-        });
-        const functionData = await result.outputFiles[0].text
+        const functionData = fs.readFileSync(filePath);
+        // const result = await buildSync({
+        //     entryPoints: [filePath],
+        //     bundle: true,
+        //     write: false,
+        //     define: {
+        //         global: "window",
+        //         "process.env.NODE_ENV": "'production'"
+        //     }
+        // });
+        // const functionData = await result.outputFiles[0].text
         res.type("js")
         res.send(functionData);
     })

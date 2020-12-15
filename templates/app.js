@@ -14,17 +14,6 @@
  * limitations under the License.
  */
 
-window.process = {
-    env: {
-        "NODE_ENV": "production"
-    },
-    nextTick: setTimeout.bind(window),
-}
-
-const RxDB = require('rxdb');
-import { nanoid } from 'nanoid';
-window.nanoid = nanoid;
-
 const urlParams = new URLSearchParams(window.location.search);
 const jobId = urlParams.get('jobId')
 const response = {
@@ -83,16 +72,7 @@ async function onMessage(event) {
     try {
         if (event.data.event === 'JOB_DATA') {
             let jobData = event.data.jobData;
-            let collections = {};
-            if (jobData.args.enableDB) { // e.g. demo.dev.aspen.cloud/func.js?enableDB=true
-                try {
-                    const db = await getDatabase();
-                    collections = await getCollections(db);
-                } catch (e) {
-                    console.log('Not attaching collections');
-                }
-            }
-            const result = await main(jobData.args, jobData.metadata, collections);
+            const result = await main(jobData.args, jobData.metadata);
             if (result && result.next) {
                 // stream iterator results back
                 let res = await result.next()
@@ -194,36 +174,6 @@ const sleep = milliseconds => {
         setTimeout(resolve, milliseconds)
     });
 };
-
-
-async function getDatabase() {
-    RxDB.addRxPlugin(require('pouchdb-adapter-indexeddb'));
-
-    const db = await RxDB.createRxDatabase({
-        name: 'main',
-        adapter: 'indexeddb',
-    });
-
-    return db;
-}
-
-async function getCollections(db) {
-    console.log('Getting collections!');
-    try {
-        const resp = await fetch('database/collections.json');
-        const collectionConfigs = await resp.json();
-        // Convert stringified functions into actual JS functions
-        for (const migrationStep in collectionConfigs.migrationStrategies) {
-            collectionConfigs.migrationStrategies[migrationStep] = eval(collectionConfigs.migrationStrategies[migrationStep]);
-        }
-        const collections = await db.addCollections(collectionConfigs);
-        return collections;
-    } catch (e) {
-        console.error(e);
-        throw new Error('Could not find database schemas');
-    }
-}
-
 
 function doSetup() {
     if (isBackend()) {
