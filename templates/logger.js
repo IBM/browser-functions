@@ -1,6 +1,7 @@
-const jobId = urlParams.get('jobId')
 
 function captureConsole() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const jobId = urlParams.get('jobId')
     const original = window.console
     window.console = {
         ...original,
