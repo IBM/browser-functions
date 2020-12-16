@@ -26,7 +26,8 @@ const config = {
   protocol: process.env.PROTOCOL || "http",
   isDev: process.env.NODE_ENV !== "production",
   inDocker: process.env.IN_DOCKER,
-  portInfo: `:${process.env.PORT || 3000}`,
+  portInfo:
+    process.env.NODE_ENV === "production" ? "" : `:${process.env.PORT || 3000}`,
   chromeTabCount: 100,
   firefoxTabCount: 20,
 };
