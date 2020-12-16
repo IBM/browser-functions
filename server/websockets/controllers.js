@@ -117,7 +117,7 @@ function getNextExecutionController(applicationId, functionSettings) {
     logger.debug("User has the following environments selected: " + JSON.stringify(functionSettings['execution-environments']))
 
     for (let executionEnvironment of functionSettings['execution-environments']) {
-        switch(executionEnvironment) {
+        switch (executionEnvironment) {
             case executionEnvironments.masterChrome:
                 if (controllers.masterChrome.controllerCount() > 0) {
                     executionEnvsWithControllers.push(executionEnvironment)
@@ -153,7 +153,7 @@ function getNextExecutionController(applicationId, functionSettings) {
 }
 
 function getControllerForExecutionEnvironment(applicationId, executionEnvironment) {
-    switch(executionEnvironment) {
+    switch (executionEnvironment) {
         case executionEnvironments.masterChrome:
             return controllers.masterChrome.getNextController()
         case executionEnvironments.masterFirefox:
@@ -176,7 +176,7 @@ function allControllers() {
         allControllers.push(...app.sockets)
     }
 
-   return allControllers
+    return allControllers
 }
 
 module.exports = {
