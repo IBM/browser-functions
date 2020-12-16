@@ -15,7 +15,7 @@
  */
 
 const urlParams = new URLSearchParams(window.location.search);
-const jobId = urlParams.get('jobId')
+let jobId = urlParams.get('jobId')
 const response = {
     'status': 200,
     'headers': {},
@@ -39,7 +39,9 @@ window.onerror = function (messageOrEvent, source, lineno, colno, error) {
     return true;
 }
 
-window.addEventListener('message', onMessage, false)
+window.addEventListener('message', (evt) => {
+    onMessage(evt);
+}, false)
 
 window.onload = () => {
     if (isBackend()) {
@@ -70,8 +72,10 @@ window.onload = () => {
 
 async function onMessage(event) {
     try {
+
         if (event.data.event === 'JOB_DATA') {
             let jobData = event.data.jobData;
+            jobId = jobData.jobId;
             const result = await main(jobData.args, jobData.metadata);
             if (result && result.next) {
                 // stream iterator results back

@@ -27,7 +27,7 @@ module.exports = class JobQueue {
         return this.jobs[jobId]
     }
 
-    completeJob({jobId, data}) {
+    completeJob({ jobId, data }) {
         if (this.jobs[jobId]) {
             this.jobs[jobId].onSuccess(data)
             this.jobs[jobId].onComplete()
@@ -35,14 +35,14 @@ module.exports = class JobQueue {
         }
     }
 
-    streamJob({jobId, data}) {
+    streamJob({ jobId, data }) {
         if (this.jobs[jobId]) {
             const onJobSuccess = this.jobs[jobId].onSuccess
             onJobSuccess(data)
         }
     }
 
-    failJob({jobId, data}) {
+    failJob({ jobId, data }) {
         if (this.jobs[jobId]) {
             const onJobFail = this.jobs[jobId].onFailure
             onJobFail(data)

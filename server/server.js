@@ -175,7 +175,6 @@ server.prepare().then(() => {
         if (['.jsx', '.tsx'].includes(params.ext)) {
             logger.debug("TRANSFORMING REACT");
             functionData = transformSync(functionData, { loader: 'jsx' }).code;
-            console.log(functionData);
         }
 
         const templateFile = `${__dirname}/../templates/${fileType}.html`
