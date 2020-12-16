@@ -55,10 +55,10 @@
             if (!warmTabJobId && freeTabs.length === 0) return;
 
             if (warmTabJobId) {
-                console.log("USING WARM TAB TO RUN FUNCTION")
+
                 const tab = tabData[warmTabJobId].tab;
                 currentJobs[nextJob.jobId] = tab;
-                ///console.log(JSON.stringify(Object.keys(Object.prototype(tab))));
+
                 tab.postMessage({
                     'event': 'JOB_DATA',
                     'jobData': nextJob,
