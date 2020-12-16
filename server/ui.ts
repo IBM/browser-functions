@@ -251,6 +251,7 @@ function functionsRoutes(app: Express.Router, nextjs) {
       fileTree: appData.files,
       code,
       fileName: functionName,
+      applicationId: req.applicationId
     });
   });
 }

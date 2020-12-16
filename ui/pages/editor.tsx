@@ -1,98 +1,174 @@
 import React, { useEffect, useRef, useState } from "react";
-import Editor from "@monaco-editor/react";
+import Editor, { monaco } from "@monaco-editor/react";
 import { FileTree, IFileTreeNode, FileNode, DirectoryNode } from "../components/react/file-tree";
 import path from "path";
-import useSWR from 'swr';
+import useSWR, { mutate } from 'swr';
+import { Icon, Intent } from "@blueprintjs/core";
+import { IconNames } from "@blueprintjs/icons";
+import { v4 as uuidv4 } from 'uuid';// TODO: Import monaco types
+
+interface IEditorModelOptions {
+  onIsDirtyChange?:(editor:EditorModel) => void;
+  onModelSave?:() => void;
+}
+
+class EditorModel {
+  private lastSavedVersionId: number;
+  model:any;
+  _isDirty: boolean;
+  modelKey: string;
+  onIsDirtyChange: (editor:EditorModel) => void;
+  onModelSave:() => void;
+
+  constructor(modelKey:string, model:any, options:IEditorModelOptions) {
+    this.modelKey = modelKey;
+    this.model = model;
+    model.onDidChangeContent(() => {
+      this.isDirty = model.getAlternativeVersionId() !== this.lastSavedVersionId;
+    });
+    this.lastSavedVersionId = model.getAlternativeVersionId();
+    this._isDirty = false;
+    this.onIsDirtyChange = options.onIsDirtyChange;
+    this.onModelSave = options.onModelSave;
+  }
+
+  get isDirty(): boolean {
+    return this._isDirty;
+  }
+
+  set isDirty(newDirtyState: boolean) {
+    const wasDirty = this.isDirty;
+    if(wasDirty !== newDirtyState) {
+      this._isDirty = newDirtyState;
+      this.onIsDirtyChange(this);
+    }
+  }
+
+  public saveModel() {
+    this.lastSavedVersionId = this.model.getAlternativeVersionId();
+    this.isDirty = false;
+    this.onModelSave();
+  }
+}
 
 export default function EditorPage(props) {
-
-  const codeFetcher = async (url) => {
-    const data = await fetch(url + window.location.search);
-    return await data.text();
-  };
-
-  const initialCodeRoute = props.fileName ? path.join('/code/' + props.fileName) : '';
-  const initialCode = props.code;
-  const initialName = props.fileName;
+  const applicationId = props.applicationId;
 
   const [isEditorReady, setIsEditorReady] = useState(false);
   const valueGetter = useRef<() => string>();
   const editorRef = useRef();
-  const [name, setName] = useState(props.fileName);
   const [fileTree, setFileTree] = useState<IFileTreeNode[]>([]);
-  const [codeRoute, setCodeRoute] = useState(initialCodeRoute)
+  const [monacoInstance, setMonacoInstance] = useState(null);
+  const [monacoInstanceLoaded, setMonacoInstanceLoaded] = useState(false);
+  const [editorModels, setEditorModels] = useState<Map<string, EditorModel>>(new Map<string, EditorModel>());
+  const [fileNodeMap, setFileNodeMap] = useState({});
+  const [newFileName, setNewFileName] = useState("");
+  const [selectedFileKey, setSelectedFileKey] = useState("");
 
   // https://github.com/vercel/swr/issues/284 - using initialData for SSR has open bug
-  const { data: code, error: codeError } = useSWR(name ? codeRoute : null, codeFetcher, { initialData: name === initialName ? initialCode : undefined }); 
+  // TODO: confirm this still works as expected
+  const { data: code, error: codeError, isValidating: codeValidating } = useSWR(selectedFileKey ? ['/static', selectedFileKey] : null, codeFetcher, { onSuccess: onCodeFetchSuccess})
+
+  async function codeFetcher(baseUrl, fileKey) {
+    const url = path.join(baseUrl, fileKey);
+    const data = await fetch(url + window.location.search);
+    const code = await data.text();
+    return code;
+  };
+
+  // when we have our code, fetch the proper model or create a new model to mount the code to
+  function onCodeFetchSuccess(data) {
+    let fileName = selectedFileKey;
+    if (!(fileName in editorModels)) {
+      const model = createEditorModel(fileName, data);
+      editorModels[fileName] = model;
+      setEditorModels({...editorModels});
+    }
+    editorRef.current.setModel(editorModels[fileName].model);
+  }
 
   useEffect(() => {
-      const transformedData = _transformFileTreeData(props.fileTree);
-      setFileTree(transformedData);
-      if(props.fileName) {
-        handleInitOpenFile(props.fileName);
-      }
+      const initializeMonaco = async () => {
+        const monacoInst = await monaco.init();
+        setMonacoInstance(monacoInst);
+        setMonacoInstanceLoaded(true);
+      };
+      initializeMonaco();
   }, []);
+
+  // Wait for editor setup before setting up the rest of the page data (easier to deal with that way)
+  useEffect(() => {
+    if(monacoInstanceLoaded && isEditorReady) {
+      initializeFileTreeData(props.fileTree);
+      selectFile(props.fileName);
+    }
+  }, [monacoInstanceLoaded, isEditorReady]);
 
   useEffect(() => {
     if (editorRef.current) {
-      bindSaveCommand(editorRef.current, () => saveFileAs(name));
+      bindSaveCommand(editorRef.current, () => saveFileAs(selectedFileKey));
     }
-    setCodeRoute(path.join('/code', name));
-  }, [name]);
+  }, [selectedFileKey]);
+
+  const selectFile = (fileName: string) => {
+    setSelectedFileKey(fileName); // should kick off process: new file key --> new code --> (new editor model) --> set editor model
+  }
+
+  const createEditorModel = (modelKey, codeData) : EditorModel => {
+    const language = extToLanguage(modelKey.split(".")[1]);
+    const monacoModel = monacoInstance.editor.createModel(codeData, language);
+    const handleIsDirtyChange = (editor) => {
+      const node = fileNodeMap[modelKey];
+      node.secondaryLabel = editor.isDirty ? <Icon icon={IconNames.SYMBOL_CIRCLE} intent={Intent.DANGER}/> : '';
+      setFileTree([...fileTree]);
+    }
+    const editorModel = new EditorModel(modelKey, monacoModel, {onIsDirtyChange: handleIsDirtyChange});
+
+    return editorModel;
+  }
 
   function handleEditorDidMount(_valueGetter: () => string, editor) {
     setIsEditorReady(true);
     valueGetter.current = _valueGetter;
     editorRef.current = editor;
-    bindSaveCommand(editor, () => saveFileAs(name));
   }
 
   function saveFileAs(fileName: string) {
     if (valueGetter.current == null) {
       return;
     }
-    const url = "/static/" + fileName + window.location.search;
-    fetch(url, {
-      method: "PUT",
-      body: valueGetter.current(),
-    })
-      .then((res) => {
-        if (res.status === 200) {
-          window.location.href = "/" + window.location.search;
-        } else {
-          res.text().then((msg) => {
-            window.alert(msg);
-          });
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-      });
+    saveStaticFile(fileName, valueGetter.current(), () => {
+      mutate("/static/" + fileName, valueGetter.current());
+      editorModels[fileName].saveModel();
+    }, (err, msg) => {
+      if(err) console.log(err);
+      if(msg) window.alert(msg);
+    });
   }
 
-  const handleInitOpenFile = (filePath:string) => {
-    // TODO - highlight/expand proper file in filetree
-  }
-
+  // TODO: bug here if you switch too fast
   const fileOpenCallback = (filePath: string): (() => void) => {
     return () => {
-      setName(filePath);
+      selectFile(filePath);
     };
   };
 
-  const _transformFileTreeData = (fileTreeData): IFileTreeNode[] => {
-    let fileIdRef = { id: -1 };
-    const transformFileDataHelper = (fileTreeData, fileIdRef, pathParts) => {
+  // Turn server filetree data into data that can be read by the FileTree/Blueprint (TODO: possibly unify these)
+  const initializeFileTreeData = (fileTreeData): void => {
+    const filesMap = {};
+    const transformFileDataHelper = (fileTreeData, pathParts) => {
       const data: IFileTreeNode[] = [];
       for (const levelName in fileTreeData) {
-        fileIdRef.id += 1;
         pathParts.push(levelName);
         const { _type, ...children } = fileTreeData[levelName];
         if (_type === "file") {
-          data.push(new FileNode(fileIdRef.id, levelName, fileOpenCallback(path.join(...pathParts))));
+          const fileKey = path.join(...pathParts);
+          const node = new FileNode(uuidv4(), levelName, fileOpenCallback(fileKey));
+          data.push(node);
+          filesMap[fileKey] = node;
         } else {
           data.push(
-            new DirectoryNode(fileIdRef.id, levelName, transformFileDataHelper(children, fileIdRef, pathParts)),
+            new DirectoryNode(uuidv4(), levelName, transformFileDataHelper(children, pathParts)),
           );
         }
         pathParts.pop();
@@ -100,11 +176,79 @@ export default function EditorPage(props) {
 
       return data;
     };
-
-    return transformFileDataHelper(fileTreeData, fileIdRef, []);
+    
+    const treeData = transformFileDataHelper(fileTreeData, []);
+    setFileTree(treeData);
+    setFileNodeMap(filesMap);
   };
 
-  const language = extToLanguage(name.split(".")[1]);
+  const saveStaticFile = (fileName, content, onSuccess, onError) => {
+    const url = "/static/" + fileName + window.location.search;
+    fetch(url, {
+      method: "PUT",
+      body: content,
+    }).then((res) => {
+      if (res.status === 200) {
+        onSuccess(res);   
+      } else {
+        res.text().then((msg) => {
+          const err = new Error(`Unexpected status: ${res.status}`);
+          onError(err, msg);
+        });
+      }
+    })
+    .catch((err) => {
+      onError(err);
+    });
+  }
+
+
+  const createNewFile = (fileName) => {
+    saveStaticFile(fileName, "", () => {
+        mutate("/static/" + fileName, "");
+        setNewFileName("");
+        addFileTreeNode(fileName);
+    }, (err, msg) => {
+      if(err) console.log(err);
+      if(msg) window.alert(msg);
+    })
+  }
+
+  const addFileTreeNode = (fileName) => {
+    // TODO: traverse directories
+    const newNode = new FileNode(uuidv4(), fileName, fileOpenCallback(fileName));
+    fileNodeMap[fileName] = newNode;
+    fileTree.push(newNode);
+    setFileNodeMap({...fileNodeMap});
+    setFileTree([...fileTree]);
+  }
+
+  const removeFileTreeNode = (fileName) => {
+    // TODO: traverse directories
+    const index = fileTree.indexOf(fileNodeMap[fileName]);
+    fileTree.splice(index, 1);
+    delete fileNodeMap[fileName];
+    setFileNodeMap({...fileNodeMap});
+    setFileTree([...fileTree]);
+  }
+
+  const deleteEditorModel = (fileName) => {
+    const editorModel = editorModels[fileName];
+    editorModel.model.dispose();
+    delete editorModels[fileName];
+  }
+
+  const deleteSelectedFile = (fileName) => {
+    const url = path.join("/functions", applicationId,fileName) + window.location.search;
+    fetch(url, {
+      method: "DELETE"
+    }).then(() => {
+      deleteEditorModel(fileName);
+      removeFileTreeNode(fileName);
+    }).catch((err) => {
+      console.log(err)
+    })
+  }
 
   return (
     <div
@@ -126,14 +270,13 @@ export default function EditorPage(props) {
           padding: "8px",
         }}
       >
-        <input value={name} onChange={(e) => setName(e.target.value)} />
-        <button onClick={() => saveFileAs(name)}>Save</button>
-        <FileTree nodes={fileTree} />
+        <input value={newFileName} onChange={(e) => setNewFileName(e.target.value)} />
+        <button onClick={() => createNewFile(newFileName)}>Add New File</button>
+        <button onClick={() => deleteSelectedFile(selectedFileKey)}>Delete</button>
+        <FileTree nodes={fileTree}/>
       </div>
       <Editor
         height="100vh"
-        language={language}
-        value={code}
         editorDidMount={handleEditorDidMount}
         theme="dark"
       />
@@ -141,14 +284,17 @@ export default function EditorPage(props) {
   );
 }
 
+
+
 export async function getServerSideProps({ query }) {
-  const { code, fileName, fileTree } = query;
+  const { code, fileName, fileTree, applicationId } = query;
 
   return {
     props: {
       code: code || "",
       fileName: fileName || "",
-      fileTree: fileTree || []
+      fileTree: fileTree || [],
+      applicationId: applicationId || ""
     },
   };
 }
