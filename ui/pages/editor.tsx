@@ -5,7 +5,8 @@ import path from "path";
 import useSWR, { mutate } from 'swr';
 import { Icon, Intent } from "@blueprintjs/core";
 import { IconNames } from "@blueprintjs/icons";
-import { v4 as uuidv4 } from 'uuid';// TODO: Import monaco types
+import { v4 as uuidv4 } from 'uuid';
+import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
 
 interface IEditorModelOptions {
   onIsDirtyChange?:(editor:EditorModel) => void;
@@ -14,13 +15,13 @@ interface IEditorModelOptions {
 
 class EditorModel {
   private lastSavedVersionId: number;
-  model:any;
+  model:monacoEditor.editor.ITextModel;
   _isDirty: boolean;
   modelKey: string;
   onIsDirtyChange: (editor:EditorModel) => void;
   onModelSave:() => void;
 
-  constructor(modelKey:string, model:any, options:IEditorModelOptions) {
+  constructor(modelKey:string, model:monacoEditor.editor.ITextModel, options:IEditorModelOptions) {
     this.modelKey = modelKey;
     this.model = model;
     model.onDidChangeContent(() => {
@@ -56,7 +57,7 @@ export default function EditorPage(props) {
 
   const [isEditorReady, setIsEditorReady] = useState(false);
   const valueGetter = useRef<() => string>();
-  const editorRef = useRef();
+  const editorRef = useRef<monacoEditor.editor.IStandaloneCodeEditor>();
   const [fileTree, setFileTree] = useState<IFileTreeNode[]>([]);
   const [monacoInstance, setMonacoInstance] = useState(null);
   const [monacoInstanceLoaded, setMonacoInstanceLoaded] = useState(false);
@@ -127,7 +128,7 @@ export default function EditorPage(props) {
     return editorModel;
   }
 
-  function handleEditorDidMount(_valueGetter: () => string, editor) {
+  function handleEditorDidMount(_valueGetter: () => string, editor: monacoEditor.editor.IStandaloneCodeEditor) {
     setIsEditorReady(true);
     valueGetter.current = _valueGetter;
     editorRef.current = editor;
