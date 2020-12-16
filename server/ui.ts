@@ -20,7 +20,7 @@ import path from "path";
 import bodyParser from "body-parser";
 import * as Formidable from "formidable";
 import security from "./security";
-import Express, { Express as ExpressNS } from "express";
+import Express from "express";
 import utils from "./utils";
 import config from "./config";
 import functions from "./functions";
@@ -28,12 +28,6 @@ import functions from "./functions";
 const regex = utils.regex;
 
 const serveOptions = { root: __dirname + "/../ui/" };
-
-namespace ExpressNS {
-  interface Request {
-    applicationId?: string;
-  }
-}
 
 export default function setupUi(app: Express.Router, nextjs: NextServer) {
   serveStaticPages(app, nextjs);

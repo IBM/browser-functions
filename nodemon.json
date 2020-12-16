@@ -1,5 +1,0 @@
-{
-    "ignore": "functions_root/",
-    "exec": "TS_NODE_PROJECT=server/tsconfig.json node --inspect -r ts-node/register server/server.ts",
-    "ext": "js,ts,mjs"
-}
