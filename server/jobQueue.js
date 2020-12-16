@@ -28,7 +28,6 @@ module.exports = class JobQueue {
     }
 
     completeJob({ jobId, data }) {
-        console.log("COMPLETED JOB", jobId, data, this.jobs[jobId]);
         if (this.jobs[jobId]) {
             this.jobs[jobId].onSuccess(data)
             this.jobs[jobId].onComplete()
