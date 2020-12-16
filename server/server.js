@@ -175,7 +175,6 @@ server.prepare().then(() => {
         if (['.jsx', '.tsx'].includes(params.ext)) {
             logger.debug("TRANSFORMING REACT");
             functionData = transformSync(functionData, { loader: 'jsx' }).code;
-            // console.log(functionData);
         }
 
         const templateFile = `${__dirname}/../templates/${fileType}.html`
@@ -353,7 +352,6 @@ server.prepare().then(() => {
         });
 
         socket.on("JOB_COMPLETED", (data) => {
-            // console.log("SERVER RECEIVED COMPLETED JOB", data);
             jobQueue.completeJob({ jobId: data.jobId, data: data.response })
         })
 

@@ -40,7 +40,6 @@ window.onerror = function (messageOrEvent, source, lineno, colno, error) {
 }
 
 window.addEventListener('message', (evt) => {
-    // console.log("RECEIVED MESSAGE IN APP.JS");
     onMessage(evt);
 }, false)
 
@@ -73,15 +72,11 @@ window.onload = () => {
 
 async function onMessage(event) {
     try {
-        // console.log('Processing', JSON.stringify(event.data));
-        // console.log('TYPE', event.data.event);
+
         if (event.data.event === 'JOB_DATA') {
             let jobData = event.data.jobData;
             jobId = jobData.jobId;
-            // console.log("JOB DATA", JSON.stringify(jobData));
-            // console.log(typeof main);
             const result = await main(jobData.args, jobData.metadata);
-            // console.log("MAIN RESULT: ", result);
             if (result && result.next) {
                 // stream iterator results back
                 let res = await result.next()
