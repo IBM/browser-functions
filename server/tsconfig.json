@@ -6,17 +6,15 @@
       "strict": false,
       "forceConsistentCasingInFileNames": true,
       "esModuleInterop": true,
+      "allowSyntheticDefaultImports": true,
       "module": "commonjs",
       "moduleResolution": "node",
       "resolveJsonModule": true,
-      "outDir": "../dist"
+      "outDir": "../dist",
+      "typeRoots": [
+        "../node_modules/@types",
+        "./@types"
+      ]
     },
-    "include": [
-        "*"
-    ],
-    "exclude": [
-      "node_modules",
-      "functions"
-    ]
   }
   

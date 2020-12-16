@@ -4,10 +4,10 @@
     "description": "Functions as a service, executed by a browser",
     "main": "index.js",
     "scripts": {
-        "start": "nodemon --inspect server/server.js --ignore functions_root/ | pino-pretty -t SYS:standard -i hostname",
-        "start:prod": "NODE_ENV=production node server/server.js",
-        "build": "next build ui",
-        "build:server": "cd server && tsc"
+        "start": "nodemon | pino-pretty -t SYS:standard -i hostname",
+        "start:prod": "NODE_ENV=production node dist/server.js",
+        "build": "yarn build:server && next build ui",
+        "build:server": "tsc --project ./server/ && cp server/controller.html dist/controller.html"
     },
     "repository": {
         "type": "git",
@@ -26,7 +26,7 @@
     "dependencies": {
         "@blueprintjs/core": "^3.36.0",
         "@monaco-editor/react": "^3.7.2",
-        "body-parser": "1.18.3",
+        "body-parser": "^1.19.0",
         "chokidar": "3.2.1",
         "connect-timeout": "1.9.0",
         "esbuild": "^0.8.20",
@@ -50,6 +50,7 @@
     },
     "devDependencies": {
         "@types/express": "^4.17.9",
+        "@types/formidable": "^1.0.31",
         "@types/react": "^17.0.0",
         "nodemon": "2.0.4",
         "pino-pretty": "3.2.0",
