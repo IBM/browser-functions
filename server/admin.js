@@ -150,7 +150,7 @@ function setupAdmin(app) {
   if (!config.isDev) {
     killExistingBrowserInstances().then(() => {
       addNewChrome();
-      addNewFirefox();
+      // addNewFirefox();
     });
   } else {
     addNewChrome();
@@ -161,11 +161,11 @@ function captureLogsFromBrowserTabs(browser) {
   browser.on("targetcreated", async (target) => {
     logger.debug(
       "New " +
-        target.type() +
-        "\n\turl: " +
-        target.url() +
-        "\n\tTabs: " +
-        (await browser.pages()).length
+      target.type() +
+      "\n\turl: " +
+      target.url() +
+      "\n\tTabs: " +
+      (await browser.pages()).length
     );
 
     const page = await target.page();
