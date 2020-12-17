@@ -250,7 +250,8 @@ function functionsRoutes(app: Express.Router, nextjs) {
     return nextjs.render(req, res, `/editor`, {
       fileTree: appData.files,
       code,
-      fileName: functionName,
+      fileKey: functionName,
+      applicationId: req.applicationId
     });
   });
 }

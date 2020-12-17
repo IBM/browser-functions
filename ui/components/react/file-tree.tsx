@@ -8,18 +8,18 @@ import "@blueprintjs/icons/lib/css/blueprint-icons.css";
 
 export interface IFileTreeNode extends ITreeNode {
   fileUrl?: string;
-  nodeType: string;
+  nodeType?: string;
   onSelectFile?: () => void;
 }
 
 export class FileNode implements IFileTreeNode {
   id: number;
-  label: string;
-  icon: "document";
+  label: JSX.Element | string;
+  icon:IconName = "document";
   nodeType: string = "file";
   onSelectFile: () => void;
 
-  constructor(id: number, label: string, onSelectFile: () => void) {
+  constructor(id: number, label: JSX.Element | string, onSelectFile: () => void) {
     this.id = id;
     this.label = label;
     this.onSelectFile = onSelectFile;
@@ -28,14 +28,14 @@ export class FileNode implements IFileTreeNode {
 
 export class DirectoryNode implements IFileTreeNode {
   id: number;
-  label: string;
-  icon: "folder-close";
+  label: JSX.Element | string;
+  icon:IconName = "folder-close";
   nodeType: string = "directory";
   hasCaret: boolean = true;
   isExpanded: boolean = false;
   childNodes: IFileTreeNode[];
 
-  constructor(id: number, label: string, childNodes: IFileTreeNode[]) {
+  constructor(id: number, label: JSX.Element | string, childNodes: IFileTreeNode[]) {
     this.id = id;
     this.label = label;
     this.childNodes = childNodes;
@@ -48,7 +48,7 @@ interface IFileTreeProps {
 
 export const FileTree = (props: IFileTreeProps) => {
   const [fileTreeData, setFileTreeData] = useState<IFileTreeNode[]>([]);
-
+  
   useEffect(() => {
     setFileTreeData(props.nodes);
   }, [props.nodes]);
