@@ -79,13 +79,13 @@ export default function EditorPage(props) {
 
   // when we have our code, fetch the proper model or create a new model to mount the code to
   function onCodeFetchSuccess(data) {
-    let fileName = selectedFileKey;
-    if (!(fileName in editorModels)) {
-      const model = createEditorModel(fileName, data);
-      editorModels[fileName] = model;
+    let fileKey = selectedFileKey;
+    if (!(fileKey in editorModels)) {
+      const model = createEditorModel(fileKey, data);
+      editorModels[fileKey] = model;
       setEditorModels({...editorModels});
     }
-    editorRef.current.setModel(editorModels[fileName].model);
+    editorRef.current.setModel(editorModels[fileKey].model);
   }
 
   useEffect(() => {
@@ -101,7 +101,9 @@ export default function EditorPage(props) {
   useEffect(() => {
     if(monacoInstanceLoaded && isEditorReady) {
       initializeFileTreeData(props.fileTree);
-      selectFile(props.fileName);
+      if(props.fileKey) {
+        setEditor(props.fileKey);
+      }
     }
   }, [monacoInstanceLoaded, isEditorReady]);
 
@@ -111,8 +113,8 @@ export default function EditorPage(props) {
     }
   }, [selectedFileKey]);
 
-  const selectFile = (fileName: string) => {
-    setSelectedFileKey(fileName); // should kick off process: new file key --> new code --> (new editor model) --> set editor model
+  const setEditor = (fileKey: string) => {
+    setSelectedFileKey(fileKey); // should kick off process: new file key --> new code --> (new editor model) --> set editor model
   }
 
   const createEditorModel = (modelKey, codeData) : EditorModel => {
@@ -134,23 +136,29 @@ export default function EditorPage(props) {
     editorRef.current = editor;
   }
 
-  function saveFileAs(fileName: string) {
+  async function saveFileAs(fileKey: string) {
     if (valueGetter.current == null) {
       return;
     }
-    saveStaticFile(fileName, valueGetter.current(), () => {
-      mutate("/static/" + fileName, valueGetter.current());
-      editorModels[fileName].saveModel();
-    }, (err, msg) => {
-      if(err) console.log(err);
-      if(msg) window.alert(msg);
-    });
+    const url = "/static/" + fileKey + window.location.search;
+    try {
+      const result = await fetch(url, { method: "PUT", body: valueGetter.current() });
+      if(result.status === 200) {
+        mutate("/static/" + fileKey, valueGetter.current());
+        editorModels[fileKey].saveModel();
+      } else {
+        const text = await result.text();
+        window.alert(text);
+      }
+    } catch (err) { 
+      console.log(err)
+    };
   }
 
   // TODO: bug here if you switch too fast
   const fileOpenCallback = (filePath: string): (() => void) => {
     return () => {
-      selectFile(filePath);
+      setEditor(filePath);
     };
   };
 
@@ -183,73 +191,107 @@ export default function EditorPage(props) {
     setFileNodeMap(filesMap);
   };
 
-  const saveStaticFile = (fileName, content, onSuccess, onError) => {
-    const url = "/static/" + fileName + window.location.search;
-    fetch(url, {
-      method: "PUT",
-      body: content,
-    }).then((res) => {
-      if (res.status === 200) {
-        onSuccess(res);   
-      } else {
-        res.text().then((msg) => {
-          const err = new Error(`Unexpected status: ${res.status}`);
-          onError(err, msg);
-        });
-      }
-    })
-    .catch((err) => {
-      onError(err);
-    });
-  }
-
-
-  const createNewFile = (fileName) => {
-    saveStaticFile(fileName, "", () => {
-        mutate("/static/" + fileName, "");
+  const createNewFile = async (fileKey) => {
+    const url = "/static/" + fileKey + window.location.search;
+    try {
+      const result = await fetch(url, { method: "PUT", body: "" });
+      if(result.status === 200) {
+        mutate("/static/" + fileKey, "");
         setNewFileName("");
-        addFileTreeNode(fileName);
-    }, (err, msg) => {
-      if(err) console.log(err);
-      if(msg) window.alert(msg);
-    })
-  }
-
-  const addFileTreeNode = (fileName) => {
-    // TODO: traverse directories
-    const newNode = new FileNode(uuidv4(), fileName, fileOpenCallback(fileName));
-    fileNodeMap[fileName] = newNode;
-    fileTree.push(newNode);
-    setFileNodeMap({...fileNodeMap});
-    setFileTree([...fileTree]);
-  }
-
-  const removeFileTreeNode = (fileName) => {
-    // TODO: traverse directories
-    const index = fileTree.indexOf(fileNodeMap[fileName]);
-    fileTree.splice(index, 1);
-    delete fileNodeMap[fileName];
-    setFileNodeMap({...fileNodeMap});
-    setFileTree([...fileTree]);
-  }
-
-  const deleteEditorModel = (fileName) => {
-    const editorModel = editorModels[fileName];
-    editorModel.model.dispose();
-    delete editorModels[fileName];
-  }
-
-  const deleteSelectedFile = (fileName) => {
-    const url = path.join("/functions", applicationId,fileName) + window.location.search;
-    fetch(url, {
-      method: "DELETE"
-    }).then(() => {
-      deleteEditorModel(fileName);
-      removeFileTreeNode(fileName);
-    }).catch((err) => {
+        addFileTreeNode(fileKey);  
+        setEditor(fileKey);
+        programmaticSelect(fileKey);
+      } else {
+        const text = await result.text();
+        window.alert(text);
+      }
+    } catch (err) { 
       console.log(err)
-    })
+    };
   }
+
+  const _filePathMutation = (fileKey, mutation, entirePath) => {
+    const filePath = fileKey.split('/');
+    const n = filePath.length
+    let fileTreeRunner = [...fileTree];
+    for (let depth = 0; depth < n; depth++) {
+      const label = filePath[depth];
+      const node = fileTreeRunner.filter(node => {return node.label === label})[0];
+      if(entirePath || depth === n-1) {
+        mutation(node);
+      }
+      fileTreeRunner = node.childNodes;
+    }
+    setFileTree([...fileTree]);
+  }
+
+  const programmaticSelect = (fileKey:string) => {
+    const mutation = (node : IFileTreeNode) => {
+      if(node.nodeType === 'file') {
+        node.isSelected = true;
+      } else {
+        node.isExpanded = true;
+      }
+    }
+    _filePathMutation(fileKey, mutation, true)
+  }
+
+  const addFileTreeNode = (fileKey) => {
+    const filePath = fileKey.split('/');
+    const fileName = filePath.pop();
+    const newNode = new FileNode(uuidv4(), fileName, fileOpenCallback(fileKey));
+    if (filePath.length > 0) {
+      let fileTreeRunner = [...fileTree];
+      for(let label of filePath) {
+        fileTreeRunner = fileTreeRunner.filter(node => {return node.label === label})[0].childNodes;
+      }
+      fileTreeRunner.push(newNode);
+    } else {
+      fileTree.push(newNode);
+    }
+    fileNodeMap[fileKey] = newNode;
+    setFileNodeMap({...fileNodeMap});
+    setFileTree([...fileTree]);
+  }
+
+  const removeFileTreeNode = (fileKey) => {
+    const filePath = fileKey.split('/');
+    filePath.pop();
+    if (filePath.length > 0) {
+      let fileTreeRunner = [...fileTree];
+      for(let label of filePath) {
+        fileTreeRunner = fileTreeRunner.filter(node => {return node.label === label})[0].childNodes;
+      }
+      const index = fileTreeRunner.indexOf(fileNodeMap[fileKey]);
+      fileTreeRunner.splice(index, 1);
+    } else {
+      const index = fileTree.indexOf(fileNodeMap[fileKey]);
+      fileTree.splice(index, 1);
+    }  
+    delete fileNodeMap[fileKey];
+    setFileNodeMap({...fileNodeMap});
+    setFileTree([...fileTree]);
+  }
+
+  const deleteEditorModel = (fileKey) => {
+    const editorModel = editorModels[fileKey];
+    editorModel.model.dispose();
+    delete editorModels[fileKey];
+  }
+
+  const deleteSelectedFile = async (fileKey) => {
+    const url = path.join("/functions", applicationId, fileKey) + window.location.search;
+    try {
+      //TODO fetch returning 404
+      await fetch(url, { method: "DELETE"});
+      deleteEditorModel(fileKey);
+      removeFileTreeNode(fileKey);
+    } catch(err) {
+      console.log(err)
+    }
+  }
+
+  const filePathDisplay = selectedFileKey ? selectedFileKey.replace("/", " > ") : ""
 
   return (
     <div
@@ -288,12 +330,12 @@ export default function EditorPage(props) {
 
 
 export async function getServerSideProps({ query }) {
-  const { code, fileName, fileTree, applicationId } = query;
+  const { code, fileKey, fileTree, applicationId } = query;
 
   return {
     props: {
       code: code || "",
-      fileName: fileName || "",
+      fileKey: fileKey || "",
       fileTree: fileTree || [],
       applicationId: applicationId || ""
     },

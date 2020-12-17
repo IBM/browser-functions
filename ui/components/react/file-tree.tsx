@@ -8,7 +8,7 @@ import "@blueprintjs/icons/lib/css/blueprint-icons.css";
 
 export interface IFileTreeNode extends ITreeNode {
   fileUrl?: string;
-  nodeType: string;
+  nodeType?: string;
   onSelectFile?: () => void;
 }
 
