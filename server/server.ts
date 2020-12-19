@@ -34,6 +34,8 @@ import timeout from "connect-timeout";
 import bodyParser from "body-parser";
 import { transformSync, buildSync } from "esbuild";
 import nextjs from "next";
+import aspenfs from "./aspen-fs";
+
 const dev = process.env.NODE_ENV !== "production";
 const nextServer = nextjs({ dev, dir: "./ui" });
 const handleWithNext = nextServer.getRequestHandler();
@@ -133,7 +135,7 @@ nextServer.prepare().then(() => {
     res.send(functionData);
   });
 
-  app.all("/static/*", (req, res, next) => {
+  app.all("/static/*", async (req, res, next) => {
     if (req.method !== "GET" && req.method !== "POST") {
       next();
       return;
@@ -168,7 +170,8 @@ nextServer.prepare().then(() => {
     // todo: allow this to be configurable per app
     res.set("Access-Control-Allow-Origin", "*");
 
-    let functionData = fs.readFileSync(filePath).toString("utf8");
+    let functionData = (await aspenfs.readFile(filePath)).toString("utf8");
+
     logger.debug("LOADING USER CODE!");
     logger.debug(filePath, params.ext);
     if ([".jsx", ".tsx"].includes(params.ext)) {

@@ -28,6 +28,9 @@ const fileUtils = require('./fileUtils')
 const { execSync } = require('child_process');
 const { install } = require('esinstall');
 
+import s3fs from '../s3fs';
+import aspenfs from '../aspen-fs';
+
 class FilesChangedEmitter extends EventEmitter {
 }
 
@@ -58,9 +61,8 @@ async function readFunctions() {
     functions = {}
     authKeyMap = {}
     packagesMap = {}
-
-    const appNames = await fsPromises.readdir(config.functionsRoot)
-
+    
+    const appNames = await aspenfs.readdir(config.functionsRoot);
     const readFilePromises = []
 
     for (let appName of appNames) {
@@ -107,31 +109,72 @@ async function read(dir, appName) {
     return fileTree
 }
 
+// TODO: Play with list S3 API to clean this up
+async function readS3(appName) {
+    const filesPath = path.join(appName, "files/");
+    const filePathsList = await s3fs.listDirectoryContents(filesPath);
+    const files = {};
+
+    for(const filePath of filePathsList) {
+        const splitPath = filePath.split("/");
+        const fileName = splitPath.pop();
+        const filesRunner = files;
+        const finalDir = splitPath.reduce((curr, key) => {
+            if (!(key in curr)) {
+                curr[key] = {
+                    _type: 'directory'
+                }            
+            } 
+            return curr[key];
+        } , filesRunner);
+
+        const runtime = utils.runtimeFromName(fileName)
+        const executeUrl = runtime ? utils.constructExecuteUrl(appName, splitPath, fileName) : ''
+        const staticUrl = utils.constructStaticUrl(appName, splitPath, fileName)
+        finalDir[fileName] = {
+            runtime,
+            executeUrl,
+            staticUrl,
+            _type: 'file'
+        }
+    }
+    
+    const result = files[appName]['files'];
+    delete result['_type'];
+    return result;
+}
+
 async function readSingleApplication(appName) {
     try {
-        const settingsBytes = await fsPromises.readFile(`${config.functionsRoot}${appName}/settings.json`)
+        const settingsBytes = await aspenfs.readFile(`${config.functionsRoot}${appName}/settings.json`);
         const settings = JSON.parse(settingsBytes)
         settings.applicationId = appName
         settings.controllerUrl = utils.constructControllerUrl(appName, settings['access-key'])
 
-        const files = await read(`${config.functionsRoot}${appName}/files`, appName)
-
+        let files = {};
+        if (config.useS3) {
+            files = await readS3(appName);
+        } else if (fs.existsSync(`${config.functionsRoot}${appName}/files`)) {
+            files = await read(`${config.functionsRoot}${appName}/files`,appName)
+        }
+        
         if (files['environment.json']) {
-            const envBytes = await fsPromises.readFile(`${config.functionsRoot}${appName}/files/environment.json`)
+            const envBytes = await aspenfs.readFile(`${config.functionsRoot}${appName}/files/environment.json`)
             const env = JSON.parse(envBytes)
             settings['environment'] = env
         }
 
-        const packageJson = await readPackageJson(appName);
+        // TODO: figure out package json
+        // const packageJson = await readPackageJson(appName);
 
         authKeyMap[settings["access-key"]] = appName
-
+        
         functions[appName] = {
             settings,
             files
         }
 
-        packagesMap[appName] = packageJson;
+        // packagesMap[appName] = packageJson;
 
     } catch (err) {
         logger.error('Unable to read application: ' + appName)
@@ -213,8 +256,8 @@ async function createNewApplication(applicationId, email) {
         throw new Error('Application already exists')
     }
 
-    await fsPromises.mkdir(`${config.functionsRoot}${applicationId}`)
-    await fsPromises.mkdir(`${config.functionsRoot}${applicationId}/files`)
+    // await fsPromises.mkdir(`${config.functionsRoot}${applicationId}`)
+    // await fsPromises.mkdir(`${config.functionsRoot}${applicationId}/files`)
 
     const settings = {
         "access-key": uuid.v4(),
@@ -224,7 +267,10 @@ async function createNewApplication(applicationId, email) {
 
     await saveFunctionSettingsToFile(applicationId, settings)
 
-    execSync("yarn init -y", {cwd: `${config.functionsRoot}${applicationId}`})
+    // TODO: packages?
+    // execSync("yarn init -y", {cwd: `${config.functionsRoot}${applicationId}`})
+
+    await readSingleApplication(applicationId);
 
     return settings["access-key"]
 }
@@ -232,7 +278,7 @@ async function createNewApplication(applicationId, email) {
 async function saveFunctionSettingsToFile(applicationId, settings) {
     const settingsCopy = {...settings}
     delete settingsCopy.environment
-    return fsPromises.writeFile(`${config.functionsRoot}${applicationId}/settings.json`, JSON.stringify(settingsCopy, null, 4))
+    await aspenfs.writeFile(`${config.functionsRoot}${applicationId}/settings.json`, JSON.stringify(settingsCopy, null, 4))
 }
 
 async function waitForNewFilesToBeRead() {
@@ -256,6 +302,7 @@ async function waitForNewFilesToBeRead() {
     ])
 }
 
+// Deprecated (I THINK) - meant for drag/drop
 async function addFunctionFile(applicationId, file, filePath) {
     if (!checkApplicationExists(applicationId)) {
         throw new Error('Application does not exist')
@@ -276,8 +323,10 @@ async function addFunctionString(applicationId, filename, code) {
         throw new Error('Application does not exist')
     }
     const newFilePath = `${config.functionsRoot}${applicationId}/files/${filename}`
-    await fsPromises.writeFile(newFilePath, code)
-    await waitForNewFilesToBeRead()
+    await aspenfs.writeFile(newFilePath, code)
+
+    // await waitForNewFilesToBeRead()
+    await readSingleApplication(applicationId);
 }
 
 async function addDependencies(applicationId, newDependencies, isDev) {
@@ -317,33 +366,16 @@ function applicationAllowsCustomControllers(applicationId) {
     return executionEnvironments.includes('user')
 }
 
-function deleteFolderRecursive(path) {
-    if( fs.existsSync(path) ) {
-        if(fs.lstatSync(path).isFile()) {
-            fs.unlinkSync(path);
-            return
-        }
-        fs.readdirSync(path).forEach(function(file,index){
-            const curPath = path + "/" + file;
-            if(fs.lstatSync(curPath).isDirectory()) { // recurse
-                deleteFolderRecursive(curPath);
-            } else { // delete file
-                fs.unlinkSync(curPath);
-            }
-        });
-        fs.rmdirSync(path);
-    }
-};
-
 async function deleteFunction(applicationId, functionName) {
     const filePath = `${config.functionsRoot}${applicationId}/files/${functionName}`
-    deleteFolderRecursive(filePath)
-    await waitForNewFilesToBeRead()
+    await aspenfs.deleteFile(filePath);
+    // await waitForNewFilesToBeRead()
+    await readSingleApplication(applicationId);
 }
 
 async function getFunctionAsString(applicationId, functionName) {
     const filePath = `${config.functionsRoot}${applicationId}/files/${functionName}`
-    const data = await fsPromises.readFile(filePath)
+    const data = await aspenfs.readFile(filePath)
     return data.toString()
 }
 

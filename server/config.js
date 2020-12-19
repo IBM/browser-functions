@@ -17,15 +17,18 @@
 const config = {
   port: process.env.PORT || 3000,
   host: process.env.HOST || "browserfunctions.test",
-  functionDomain:
+  functionDomain: 
     process.env.DOMAIN || process.env.HOST || "browserfunctions.test",
-  functionsRoot:
+  functionsRoot:  process.env.USE_S3 ? "" : 
     process.env.FUNCTIONS_ROOT || __dirname + "/../functions_root/",
   masterAccessKey: process.env.MASTER_ACCESS_KEY || "MASTER_ACCESS_KEY",
   level: process.env.LOG_LEVEL || "debug",
   protocol: process.env.PROTOCOL || "http",
   isDev: process.env.NODE_ENV !== "production",
   inDocker: process.env.IN_DOCKER,
+  useS3: process.env.USE_S3,
+  awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   portInfo:
     process.env.NODE_ENV === "production" ? "" : `:${process.env.PORT || 3000}`,
   chromeTabCount: 100,
@@ -41,6 +44,12 @@ if (!config.isDev && !process.env.MASTER_ACCESS_KEY) {
 if (!config.isDev && !process.env.HOST) {
   throw new Error(
     "You must set an environment variable named HOST in production mode."
+  );
+}
+
+if (config.useS3 && !(config.awsAccessKeyId &&  config.awsSecretAccessKey)) {
+  throw new Error(
+    "You must provide AWS credentials to use S3 storage."
   );
 }
 
