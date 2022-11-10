@@ -34,7 +34,7 @@
         "tail": "2.0.2"
     },
     "devDependencies": {
-        "nodemon": "2.0.4",
+        "nodemon": "2.0.20",
         "pino-pretty": "3.2.0"
     }
 }
