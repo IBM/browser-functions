@@ -25,7 +25,7 @@
         "body-parser": "1.18.3",
         "chokidar": "3.2.1",
         "connect-timeout": "1.9.0",
-        "express": "4.16.4",
+        "express": "4.17.3",
         "formidable": "1.2.1",
         "pino": "5.12.6",
         "puppeteer": "1.18.1",
